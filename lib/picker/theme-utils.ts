@@ -127,26 +127,30 @@ export const randomizeTheme = (
  * @returns CSS code as a string
  */
 export const generateThemeCode = (themeColors: Record<ThemeMode, ThemeColors>): string => {
-  let code = `:root {\n`;
+  let code = `@layer base {\n`;
+
   // Light theme
+  code += `  :root {\n`;
   Object.entries(themeColors.light).forEach(([key, value]) => {
     if (key === 'radius') {
-      code += `  --${key}: ${value};\n`;
+      code += `    --${key}: ${value};\n`;
     } else {
-      code += `  --${key}: hsl(${value});\n`;
+      code += `    --${key}: hsl(${value});\n`;
     }
   });
-  code += `}\n\n`;
+  code += `  }\n\n`;
 
   // Dark theme
-  code += `.dark {\n`;
+  code += `  .dark {\n`;
   Object.entries(themeColors.dark).forEach(([key, value]) => {
     if (key === 'radius') {
-      code += `  --${key}: ${value};\n`;
+      code += `    --${key}: ${value};\n`;
     } else {
-      code += `  --${key}: hsl(${value});\n`;
+      code += `    --${key}: hsl(${value});\n`;
     }
   });
+  code += `  }\n`;
+
   code += `}\n`;
 
   return code;

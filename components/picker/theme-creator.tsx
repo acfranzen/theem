@@ -24,6 +24,7 @@ import {
 } from '@/lib/picker/theme-utils';
 import ThemeEditor from '@/components/picker/theme-editor';
 import ThemePreview from '@/components/picker/theme-preview';
+import ThemeImportModal from '@/components/picker/theme-import-modal';
 import { defaultTheme } from './defaultTheme';
 
 // Type for theme color key
@@ -45,6 +46,7 @@ export default function ThemeCreator() {
 
   // Track when we need to force an editor update (for slider and UI refresh)
   const [forceEditorUpdate, setForceEditorUpdate] = useState(0);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   // Handle hydration mismatch
   useEffect(() => {
@@ -159,6 +161,52 @@ export default function ThemeCreator() {
     toast('Theme code has been copied to your clipboard');
   }, []);
 
+  // Handle imported theme
+  const handleImportTheme = useCallback(
+    (importedTheme: Record<ThemeMode, ThemeColors>) => {
+      // Update the theme colors reference
+      themeColorsRef.current = importedTheme;
+
+      // Get the current active mode
+      const activeMode = getActiveThemeMode(currentTheme);
+
+      // Apply the active theme to DOM
+      applyThemeToDOM(importedTheme, activeMode, document.documentElement, false);
+
+      // For the inactive theme, store as data attributes
+      const inactiveMode: ThemeMode = activeMode === 'light' ? 'dark' : 'light';
+      const inactiveTheme = importedTheme[inactiveMode];
+
+      Object.entries(inactiveTheme).forEach(([key, value]) => {
+        const dataKey = toCamelCase(`${inactiveMode}-${key}`);
+
+        if (key === 'radius') {
+          document.documentElement.dataset[dataKey] = value;
+        } else {
+          // Special handling for sidebar background
+          if (key === 'sidebar-background') {
+            const sidebarKey = toCamelCase(`${inactiveMode}-sidebar`);
+            document.documentElement.dataset[sidebarKey] = `hsl(${value})`;
+          } else {
+            document.documentElement.dataset[dataKey] = `hsl(${value})`;
+          }
+        }
+      });
+
+      // Extract hue from primary color for the hue selector
+      const primaryColor = importedTheme[activeMode].primary;
+      const hue = extractHueFromColor(primaryColor);
+      currentHueRef.current = hue;
+
+      // Force UI update
+      setForceEditorUpdate(prev => prev + 1);
+
+      // Show success message
+      toast('Theme imported successfully');
+    },
+    [currentTheme]
+  );
+
   if (!mounted) {
     return <div>Loading...</div>;
   }
@@ -179,7 +227,9 @@ export default function ThemeCreator() {
               {copied ? <Check className='w-4 h-4 mr-2' /> : <Copy className='w-4 h-4 mr-2' />}
               Copy Code
             </Button>
-            <Button size='sm'>Generate Theme</Button>
+            <Button onClick={() => setImportModalOpen(true)} size='sm'>
+              Import Theme
+            </Button>
           </div>
         </div>
       </header>
@@ -202,6 +252,12 @@ export default function ThemeCreator() {
         {/* Theme Preview Component */}
         <ThemePreview />
       </div>
+
+      <ThemeImportModal
+        open={importModalOpen}
+        onOpenChange={setImportModalOpen}
+        onImport={handleImportTheme}
+      />
       <Toaster />
     </div>
   );

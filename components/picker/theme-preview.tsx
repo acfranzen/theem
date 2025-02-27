@@ -46,7 +46,7 @@ export default function ThemePreview({}: ThemePreviewProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
 
   return (
-    <div className='w-full md:w-2/3'>
+    <div className='w-full '>
       <div className='p-6'>
         <h2 className='text-2xl font-bold mb-6'>Component Preview</h2>
 

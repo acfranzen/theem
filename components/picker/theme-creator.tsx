@@ -28,6 +28,7 @@ import ThemeImportModal from '@/components/picker/theme-import-modal';
 import { defaultTheme } from './defaultTheme';
 import { ModeToggle } from '../mode-toggle';
 import { SidebarTrigger } from '../ui/sidebar';
+import { ScrollArea } from '../ui/scroll-area';
 
 // Type for theme color key
 type ThemeColorKey = keyof typeof defaultTheme.light;
@@ -222,7 +223,7 @@ export default function ThemeCreator() {
       style={getThemePreviewStyles(themeColorsRef.current, activeMode)}
     >
       <header className='sticky top-0 z-[15] w-full bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/5 dark:shadow-secondary border-b'>
-        <div className='container h-14 flex items-center justify-between px-4 sm:px-8'>
+        <div className='container h-14 flex items-center justify-between pl-4 sm:px-8'>
           <div className='flex items-center space-x-4 lg:space-x-0'>
             <SidebarTrigger />
             <h1 className='font-bold text-foreground'>ShadCN Theme Creator</h1>
@@ -256,7 +257,9 @@ export default function ThemeCreator() {
         />
 
         {/* Theme Preview Component */}
-        <ThemePreview />
+        <ScrollArea className='w-full h-[calc(100vh-3.5rem-2rem)]'>
+          <ThemePreview />
+        </ScrollArea>
       </div>
 
       <ThemeImportModal

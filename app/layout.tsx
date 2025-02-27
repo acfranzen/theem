@@ -3,8 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { UserProvider } from '@/lib/auth';
 import { getUser } from '@/lib/db/queries';
 import { ThemeProvider } from '@/lib/providers/theme-provider';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/app-sidebar';
+// Removed sidebar imports as they're now only used in picker layout
 // Import all fonts using Next.js font system
 import {
   Manrope,
@@ -113,12 +112,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className='min-h-[100dvh] text-foreground bg-background'>
         <ThemeProvider>
           <UserProvider userPromise={userPromise}>
-            <FontProvider>
-              <SidebarProvider>
-                <AppSidebar />
-                <SidebarInset>{children}</SidebarInset>
-              </SidebarProvider>
-            </FontProvider>
+            <FontProvider>{children}</FontProvider>
           </UserProvider>
         </ThemeProvider>
       </body>

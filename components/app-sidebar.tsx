@@ -1,8 +1,11 @@
+'use client';
+
 import { Calendar, Home, Inbox, Search, Settings } from 'lucide-react';
 
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -10,6 +13,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { NavUser } from './nav-user';
+import { useUser } from '@/lib/auth';
+import { use } from 'react';
 
 // Menu items.
 const items = [
@@ -41,11 +47,23 @@ const items = [
 ];
 
 export function AppSidebar() {
+  const { userPromise } = useUser();
+  const user = use(userPromise);
+
+  // Transform user data to match NavUser component requirements
+  const navUserData = user
+    ? {
+        name: user.name || 'User',
+        email: user.email,
+        avatar: '', // Add a default avatar or get it from somewhere else
+      }
+    : null;
+
   return (
     <Sidebar collapsible='icon'>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel className='text-lg font-bold'>Theem.ai</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map(item => (
@@ -62,6 +80,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>{navUserData && <NavUser user={navUserData} />}</SidebarFooter>
     </Sidebar>
   );
 }

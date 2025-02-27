@@ -20,6 +20,8 @@ import {
   getActiveThemeMode,
   applyThemeToDOM,
   toCamelCase,
+  updateThemeColor,
+  updateAllThemeHues,
 } from '@/lib/picker/theme-utils';
 import ThemeEditor from '@/components/picker/theme-editor';
 import ThemePreview from '@/components/picker/theme-preview';
@@ -63,67 +65,34 @@ export default function ThemeCreator() {
     applyThemeToDOM(themeColorsRef.current, mode);
   }, [mounted, currentTheme]);
 
-  // Update color without re-rendering
-  const handleColorChange = useCallback(
-    (key: string, value: string, mode: ThemeMode) => {
-      // Update the ref directly
-      themeColorsRef.current = {
-        ...themeColorsRef.current,
-        [mode]: {
-          ...themeColorsRef.current[mode],
-          [key]: value,
-        },
-      };
-
-      // Update the DOM directly using our utility
-      const activeMode = getActiveThemeMode(currentTheme);
-      if (mode === activeMode) {
-        // Only apply to DOM if we're changing the active mode
-        if (key === 'radius') {
-          document.documentElement.style.setProperty(`--${key}`, value);
-        } else {
-          document.documentElement.style.setProperty(`--${key}`, `hsl(${value})`);
-        }
-      }
+  // Update all hues with new value without re-rendering
+  const handleHueChange = useCallback(
+    (newHue: number) => {
+      // Use the utility function from theme-utils
+      updateAllThemeHues({
+        newHue,
+        themeColorsRef,
+        currentTheme,
+        currentHueRef,
+        setForceEditorUpdate,
+      });
     },
     [currentTheme]
   );
 
-  // Update all hues with new value without re-rendering
-  const handleHueChange = useCallback(
-    (newHue: number) => {
-      // Store the new hue value
-      currentHueRef.current = newHue;
-
-      // Update all theme colors with the new hue
-      const updatedThemes = updateAllHues(themeColorsRef.current, newHue);
-      themeColorsRef.current = updatedThemes;
-
-      // Get the current active mode
-      const activeMode = getActiveThemeMode(currentTheme);
-
-      // Apply the active theme to DOM - this prevents dark theme from overriding light theme
-      // Use forceApply=false here since we only want to apply the current theme
-      applyThemeToDOM(themeColorsRef.current, activeMode, document.documentElement, false);
-
-      // For the inactive theme, we'll use a data attribute approach
-      const inactiveMode: ThemeMode = activeMode === 'light' ? 'dark' : 'light';
-
-      // Store the inactive theme using data attributes
-      const inactiveTheme = themeColorsRef.current[inactiveMode];
-      Object.entries(inactiveTheme).forEach(([key, value]) => {
-        // Convert key to camelCase for dataset property
-        const dataKey = toCamelCase(`${inactiveMode}-${key}`);
-
-        if (key === 'radius') {
-          document.documentElement.dataset[dataKey] = value;
-        } else {
-          document.documentElement.dataset[dataKey] = `hsl(${value})`;
-        }
+  // Handle color change for a specific color with complete HSL values
+  const handleColorChange = useCallback(
+    (key: string, value: string, mode: ThemeMode) => {
+      // Use the utility function from theme-utils
+      updateThemeColor({
+        themeColorsRef,
+        key,
+        value,
+        mode,
+        currentTheme,
+        currentHueRef,
+        setForceEditorUpdate,
       });
-
-      // Force a UI update to ensure all components reflect the new theme
-      setForceEditorUpdate(prev => prev + 1);
     },
     [currentTheme]
   );

@@ -1,31 +1,65 @@
 import { toast } from 'sonner';
+import React from 'react';
 
 // Type definitions for theme values
 export type ThemeMode = 'light' | 'dark';
 export type ThemeColors = Record<string, string>;
 export type EditorMode = 'simple' | 'advanced';
 
+// Define HSL color type
+export type HSLColor = {
+  h: number;
+  s: number;
+  l: number;
+};
+
 /**
- * Updates all theme colors with a new hue value
+ * Updates all theme colors with new HSL values
  * @param themeColors Current theme colors for both light and dark modes
- * @param newHue New hue value to apply (0-360)
- * @returns Updated theme colors with new hue
+ * @param newColor New HSL color values to apply
+ * @param targetKey Optional specific color key to update (if not provided, updates all colors)
+ * @returns Updated theme colors with new HSL values
  */
 export const updateAllHues = (
   themeColors: Record<ThemeMode, ThemeColors>,
-  newHue: number
+  newColor: HSLColor | number,
+  targetKey?: string
 ): Record<ThemeMode, ThemeColors> => {
   const updatedThemes = { ...themeColors };
   const modes: ThemeMode[] = ['light', 'dark'];
 
+  // Handle both legacy number input (just hue) and new HSL object
+  const isHueOnly = typeof newColor === 'number';
+  const hslColor = isHueOnly ? { h: newColor, s: 0, l: 0 } : (newColor as HSLColor);
+
   modes.forEach(mode => {
     Object.entries(themeColors[mode]).forEach(([key, value]) => {
+      // Skip non-color properties like radius
       if (key !== 'radius') {
-        // Only modify the hue part of the HSL value
+        // If targetKey is specified, only update that specific color
+        if (targetKey && key !== targetKey) {
+          return;
+        }
+
         const parts = value.split(' ');
-        if (parts.length >= 1) {
-          parts[0] = newHue.toString();
-          updatedThemes[mode][key] = parts.join(' ');
+
+        if (isHueOnly) {
+          // Legacy behavior: only update the hue
+          if (parts.length >= 1) {
+            parts[0] = hslColor.h.toString();
+            updatedThemes[mode][key] = parts.join(' ');
+          }
+        } else {
+          // New behavior: update the complete HSL value
+          if (parts.length >= 3) {
+            // Update HSL components while preserving any existing format
+            parts[0] = hslColor.h.toString();
+            // Replace percentage symbol if it exists
+            parts[1] = parts[1].includes('%') ? `${hslColor.s.toFixed(1)}%` : hslColor.s.toString();
+            parts[2] = parts[2].includes('%') ? `${hslColor.l.toFixed(1)}%` : hslColor.l.toString();
+
+            updatedThemes[mode][key] = parts.join(' ');
+          }
         }
       }
     });
@@ -64,6 +98,7 @@ export const randomizeTheme = (
   themeColors: Record<ThemeMode, ThemeColors>
 ): { updatedThemes: Record<ThemeMode, ThemeColors>; newHue: number } => {
   const newHue = getRandomHue();
+  // Continue to use hue-only approach for randomization to maintain compatibility
   const updatedThemes = updateAllHues(themeColors, newHue);
   toast(`Theme randomized! New hue: ${newHue}`);
 
@@ -112,10 +147,155 @@ export const extractHueFromColor = (colorValue: string): number => {
 };
 
 /**
+ * Extract and parse all HSL components from a color string
+ * @param colorValue HSL color value as string (e.g. "295 37.9% 31.6%")
+ * @returns An HSLColor object with h, s, and l values
+ */
+export const extractHSLFromColor = (colorValue: string): HSLColor => {
+  const parts = colorValue.split(' ');
+
+  // Default values if parsing fails
+  let h = 0,
+    s = 0,
+    l = 0;
+
+  if (parts.length > 0) {
+    h = parseInt(parts[0]);
+  }
+
+  if (parts.length > 1) {
+    // Strip percentage sign if present
+    s = parseFloat(parts[1].replace('%', ''));
+  }
+
+  if (parts.length > 2) {
+    // Strip percentage sign if present
+    l = parseFloat(parts[2].replace('%', ''));
+  }
+
+  return { h, s, l };
+};
+
+/**
  * Helper function to convert hyphenated keys to camelCase for dataset properties
  */
 export const toCamelCase = (str: string): string => {
   return str.replace(/-([a-z])/g, (match, group) => group.toUpperCase());
+};
+
+/**
+ * Handle color change for a specific color with complete HSL values
+ * This is a utility function intended to be used with useCallback in components
+ *
+ * @param params Object containing necessary parameters
+ * @param params.themeColorsRef Reference to theme colors object
+ * @param params.key Color key to update
+ * @param params.value New color value
+ * @param params.mode Theme mode (light/dark)
+ * @param params.currentTheme Current active theme
+ * @param params.currentHueRef Reference to current hue value
+ * @param params.setForceEditorUpdate Function to trigger UI updates
+ */
+export const updateThemeColor = (params: {
+  themeColorsRef: React.MutableRefObject<Record<ThemeMode, ThemeColors>>;
+  key: string;
+  value: string;
+  mode: ThemeMode;
+  currentTheme: string | undefined;
+  currentHueRef: React.MutableRefObject<number>;
+  setForceEditorUpdate: React.Dispatch<React.SetStateAction<number>>;
+}): void => {
+  const { themeColorsRef, key, value, mode, currentTheme, currentHueRef, setForceEditorUpdate } =
+    params;
+
+  // Extract HSL components from the value string
+  const parts = value.split(' ');
+  if (parts.length >= 3) {
+    const h = parseFloat(parts[0]);
+
+    // Update the current hue reference
+    currentHueRef.current = h;
+
+    // Create a new copy of the theme colors
+    const updatedThemes = { ...themeColorsRef.current };
+
+    // Update the specific color in the given mode
+    updatedThemes[mode][key] = value;
+
+    // Update the ref with the new theme colors
+    themeColorsRef.current = updatedThemes;
+
+    // Apply the updated theme to DOM
+    const activeMode = getActiveThemeMode(currentTheme);
+    applyThemeToDOM(themeColorsRef.current, activeMode, document.documentElement, false);
+
+    // Also update the inactive theme in data attributes
+    const inactiveMode: ThemeMode = activeMode === 'light' ? 'dark' : 'light';
+    const inactiveTheme = themeColorsRef.current[inactiveMode];
+
+    Object.entries(inactiveTheme).forEach(([themeKey, themeValue]) => {
+      const dataKey = toCamelCase(`${inactiveMode}-${themeKey}`);
+
+      if (themeKey === 'radius') {
+        document.documentElement.dataset[dataKey] = themeValue;
+      } else {
+        document.documentElement.dataset[dataKey] = `hsl(${themeValue})`;
+      }
+    });
+
+    // Force UI update
+    setForceEditorUpdate(prev => prev + 1);
+  }
+};
+
+/**
+ * Handle hue change by updating all theme colors
+ * This is a utility function intended to be used with useCallback in components
+ *
+ * @param params Object containing necessary parameters
+ * @param params.newHue New hue value
+ * @param params.themeColorsRef Reference to theme colors object
+ * @param params.currentTheme Current active theme
+ * @param params.currentHueRef Reference to current hue value
+ * @param params.setForceEditorUpdate Function to trigger UI updates
+ */
+export const updateAllThemeHues = (params: {
+  newHue: number;
+  themeColorsRef: React.MutableRefObject<Record<ThemeMode, ThemeColors>>;
+  currentTheme: string | undefined;
+  currentHueRef: React.MutableRefObject<number>;
+  setForceEditorUpdate: React.Dispatch<React.SetStateAction<number>>;
+}): void => {
+  const { newHue, themeColorsRef, currentTheme, currentHueRef, setForceEditorUpdate } = params;
+
+  // Store the new hue value
+  currentHueRef.current = newHue;
+
+  // Get current active theme mode
+  const activeMode = getActiveThemeMode(currentTheme);
+
+  // For each color in the active theme, call handleColorChange with updated hue
+  Object.entries(themeColorsRef.current[activeMode]).forEach(([key, value]) => {
+    if (key !== 'radius') {
+      const parts = value.split(' ');
+      if (parts.length >= 3) {
+        // Only update the hue part
+        parts[0] = newHue.toString();
+        const newValue = parts.join(' ');
+
+        // Use handleColorChange to update each color
+        updateThemeColor({
+          themeColorsRef,
+          key,
+          value: newValue,
+          mode: activeMode,
+          currentTheme,
+          currentHueRef,
+          setForceEditorUpdate,
+        });
+      }
+    }
+  });
 };
 
 /**

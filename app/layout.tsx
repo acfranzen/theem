@@ -20,8 +20,9 @@ import {
 import { FontProvider } from '@/lib/providers/font-provider';
 
 export const metadata: Metadata = {
-  title: 'Next.js SaaS Starter',
-  description: 'Get started quickly with Next.js, Postgres, and Stripe.',
+  title: 'Theem.ai',
+  description:
+    'Theem.ai is a tool that helps you create beautiful, responsive, and accessible themes for your website.',
 };
 
 export const viewport: Viewport = {

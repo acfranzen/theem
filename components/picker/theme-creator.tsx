@@ -240,7 +240,7 @@ export default function ThemeCreator() {
         <div className='container h-14 flex items-center justify-between pl-4 sm:px-8'>
           <div className='flex items-center space-x-4 lg:space-x-0'>
             <SidebarTrigger />
-            <h1 className='font-bold text-foreground'>ShadCN Theme Creator</h1>
+            <h1 className='font-bold text-foreground pl-4'>Create a Theme</h1>
           </div>
           <div className='flex items-center gap-4'>
             <ModeToggle onClick={() => handleThemeToggle()} />

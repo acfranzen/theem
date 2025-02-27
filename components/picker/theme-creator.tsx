@@ -26,6 +26,7 @@ import ThemeEditor from '@/components/picker/theme-editor';
 import ThemePreview from '@/components/picker/theme-preview';
 import ThemeImportModal from '@/components/picker/theme-import-modal';
 import { defaultTheme } from './defaultTheme';
+import { ModeToggle } from '../mode-toggle';
 
 // Type for theme color key
 type ThemeColorKey = keyof typeof defaultTheme.light;
@@ -223,6 +224,7 @@ export default function ThemeCreator() {
         <div className='container flex items-center justify-between h-16 px-4'>
           <h1 className='text-2xl font-bold'>ShadCN Theme Creator</h1>
           <div className='flex items-center gap-4'>
+            <ModeToggle onClick={() => handleThemeToggle()} />
             <Button onClick={copyToClipboard} variant='outline' size='sm'>
               {copied ? <Check className='w-4 h-4 mr-2' /> : <Copy className='w-4 h-4 mr-2' />}
               Copy Code

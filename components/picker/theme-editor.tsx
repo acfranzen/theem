@@ -3,7 +3,6 @@
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -11,6 +10,12 @@ import { HslColorPicker } from 'react-colorful';
 import ColorPicker from '@/components/picker/color-picker';
 import { ThemeMode, ThemeColors, EditorMode, isSidebarKey } from '@/lib/picker/theme-utils';
 import { useEffect, useRef } from 'react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 // Import custom CSS for the hue picker
 import './hue-picker.css';
@@ -84,19 +89,9 @@ export default function ThemeEditor({
   return (
     <div className='w-full md:w-1/3 border-r'>
       <div className='p-4'>
-        <h2 className='text-xl font-bold mb-4'>Theme Properties</h2>
-        <div className='flex items-center justify-between mb-4'>
-          <h3 className='text-lg font-semibold'>Editing {activeMode} theme</h3>
-          <Button variant='outline' onClick={onThemeToggle}>
-            Switch to {currentTheme === 'dark' ? 'Light' : 'Dark'} Mode
-          </Button>
-        </div>
-
         {/* Mode toggle */}
         <div className='flex items-center justify-between mb-6 border-b pb-4'>
-          <Label htmlFor='editor-mode' className='text-base font-medium'>
-            Editor Mode
-          </Label>
+          <Label className='text-base font-medium'>Editor Mode</Label>
           <div className='flex items-center space-x-2'>
             <Label htmlFor='editor-mode' className='text-sm cursor-pointer'>
               Simple
@@ -144,37 +139,52 @@ export default function ThemeEditor({
           <>
             <ScrollArea className='h-[calc(100vh-250px)]'>
               <div className='space-y-4 pr-4'>
-                {/* Main Theme Colors */}
-                <div>
-                  <h3 className='text-base font-medium mb-2'>Main Theme</h3>
-                  {Object.entries(themeColors[activeMode])
-                    .filter(([key]) => !isSidebarKey(key))
-                    .map(([key, value]) => (
-                      <ColorPicker
-                        key={`${activeMode}-${key}`}
-                        label={key}
-                        value={value}
-                        onChange={newValue => onColorChange(key, newValue, activeMode)}
-                      />
-                    ))}
-                </div>
+                <Accordion type='single' collapsible defaultValue='main-theme' className='w-full'>
+                  {/* Main Theme Colors */}
+                  <AccordionItem value='main-theme'>
+                    <AccordionTrigger className='py-2'>
+                      <span className='text-base font-medium'>Main Theme</span>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <Separator className='my-2' />
 
-                <Separator className='my-4' />
+                      <div className='space-y-3'>
+                        {Object.entries(themeColors[activeMode])
+                          .filter(([key]) => !isSidebarKey(key))
+                          .map(([key, value]) => (
+                            <ColorPicker
+                              key={`${activeMode}-${key}`}
+                              label={key}
+                              value={value}
+                              onChange={newValue => onColorChange(key, newValue, activeMode)}
+                            />
+                          ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                {/* Sidebar Theme Colors */}
-                <div>
-                  <h3 className='text-base font-medium mb-2'>Sidebar Theme</h3>
-                  {Object.entries(themeColors[activeMode])
-                    .filter(([key]) => isSidebarKey(key))
-                    .map(([key, value]) => (
-                      <ColorPicker
-                        key={`${activeMode}-${key}`}
-                        label={key}
-                        value={value}
-                        onChange={newValue => onColorChange(key, newValue, activeMode)}
-                      />
-                    ))}
-                </div>
+                  {/* Sidebar Theme Colors */}
+                  <AccordionItem value='sidebar-theme'>
+                    <AccordionTrigger className='py-2'>
+                      <span className='text-base font-medium'>Sidebar Theme</span>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <Separator className='my-2' />
+                      <div className='space-y-3'>
+                        {Object.entries(themeColors[activeMode])
+                          .filter(([key]) => isSidebarKey(key))
+                          .map(([key, value]) => (
+                            <ColorPicker
+                              key={`${activeMode}-${key}`}
+                              label={key}
+                              value={value}
+                              onChange={newValue => onColorChange(key, newValue, activeMode)}
+                            />
+                          ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </div>
             </ScrollArea>
           </>

@@ -203,7 +203,7 @@ export default function ThemeImportModal({ open, onOpenChange, onImport }: Theme
               if (error) setError(null);
             }}
             placeholder={SIMPLIFIED_PLACEHOLDER}
-            className='min-h-[200px] max-h-[40vh] w-full font-mono text-sm resize-none'
+            className='min-h-[200px] max-h-[40vh] w-full font-mono text-sm resize-none placeholder:text-muted'
             spellCheck={false}
           />
 

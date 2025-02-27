@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   let userPromise = getUser();
 
   return (
-    <html lang='en' className={manrope.className}>
+    <html lang='en' className={manrope.className} suppressHydrationWarning>
       <body className='min-h-[100dvh] bg-gray-50 dark:bg-gray-950 text-black dark:text-white'>
         <ThemeProvider>
           <UserProvider userPromise={userPromise}>{children}</UserProvider>

@@ -42,42 +42,92 @@ import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ColorPicker from '@/components/picker/color-picker';
+import { ModeToggle } from '@/components/mode-toggle';
+import { useTheme } from 'next-themes';
 import React from 'react';
 
 // Default theme values
 const defaultTheme = {
-  background: '295 29.4% 96.7%',
-  foreground: '295 37.9% 31.6%',
-  card: '295 0% 100%',
-  'card-foreground': '295 37.9% 31.6%',
-  popover: '0 0% 100%',
-  'popover-foreground': '240 10% 3.9%',
-  primary: '295 37.9% 31.6%',
-  'primary-foreground': '295 0% 100%',
-  secondary: '295 38.2% 89.2%',
-  'secondary-foreground': '295 33.8% 26.1%',
-  muted: '295 37% 84%',
-  'muted-foreground': '295 31.5% 21.8%',
-  accent: '295 38.2% 89.2%',
-  'accent-foreground': '295 27.8% 19%',
-  destructive: '0 72% 51%',
-  'destructive-foreground': '0 0% 98%',
-  border: '295 34.1% 64.3%',
-  input: '295 36.9% 78.2%',
-  ring: '295 35.8% 41.6%',
-  radius: '0.5rem',
+  light: {
+    background: '295 29.4% 96.7%',
+    foreground: '295 37.9% 31.6%',
+    card: '295 0% 100%',
+    'card-foreground': '295 37.9% 31.6%',
+    popover: '0 0% 100%',
+    'popover-foreground': '240 10% 3.9%',
+    primary: '295 37.9% 31.6%',
+    'primary-foreground': '295 0% 100%',
+    secondary: '295 38.2% 89.2%',
+    'secondary-foreground': '295 33.8% 26.1%',
+    muted: '295 37% 84%',
+    'muted-foreground': '295 31.5% 21.8%',
+    accent: '295 38.2% 89.2%',
+    'accent-foreground': '295 27.8% 19%',
+    destructive: '0 72% 51%',
+    'destructive-foreground': '0 0% 98%',
+    border: '295 34.1% 64.3%',
+    input: '295 36.9% 78.2%',
+    ring: '295 35.8% 41.6%',
+    radius: '0.5rem',
+  },
+  dark: {
+    background: '295 0% 13%',
+    foreground: '295 29.4% 96.7%',
+    card: '295 7% 16%',
+    'card-foreground': '295 29.4% 96.7%',
+    popover: '295 27.8% 19%',
+    'popover-foreground': '295 29.4% 96.7%',
+    primary: '295 38.2% 89.2%',
+    'primary-foreground': '295 33.8% 26.1%',
+    secondary: '295 42% 34%',
+    'secondary-foreground': '295 29.4% 96.7%',
+    muted: '295 44% 33%',
+    'muted-foreground': '295 29.4% 96.7%',
+    accent: '295 31.5% 21.8%',
+    'accent-foreground': '295 29.4% 96.7%',
+    destructive: '0 72% 51%',
+    'destructive-foreground': '0 0% 98%',
+    border: '295 29.6% 35.4%',
+    input: '295 37.9% 31.6%',
+    ring: '295 29.6% 50.4%',
+    radius: '0.5rem',
+  },
 };
 
+// Type definitions for theme values
+type ThemeMode = 'light' | 'dark';
+type ThemeColorKey = keyof typeof defaultTheme.light;
+type ThemeColorValue = string;
+type ThemeColors = Record<ThemeColorKey, ThemeColorValue>;
+
 export default function ThemeCreator() {
-  const [theme, setTheme] = useState(defaultTheme);
+  const [themeColors, setThemeColors] = useState<Record<ThemeMode, ThemeColors>>({
+    light: { ...defaultTheme.light },
+    dark: { ...defaultTheme.dark },
+  });
   const [copied, setCopied] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const { theme: currentTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Handle hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // When component mounts, apply the theme styles to document.documentElement
-  // This ensures that portal-based components like Dialog get the theme styles
   useEffect(() => {
-    // Apply theme styles to :root
-    Object.entries(theme).forEach(([key, value]) => {
+    if (!mounted) return;
+
+    const mode =
+      currentTheme === 'dark' ||
+      (currentTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ? 'dark'
+        : 'light';
+
+    // Apply active theme colors
+    const activeTheme = themeColors[mode];
+    Object.entries(activeTheme).forEach(([key, value]) => {
       if (key === 'radius') {
         document.documentElement.style.setProperty(`--${key}`, value);
       } else {
@@ -88,19 +138,37 @@ export default function ThemeCreator() {
     // Cleanup function
     return () => {
       // Reset to default theme or clean up as needed
-      Object.keys(theme).forEach(key => {
+      Object.keys(themeColors[mode]).forEach(key => {
         document.documentElement.style.removeProperty(`--${key}`);
       });
     };
-  }, [theme]);
+  }, [themeColors, currentTheme, mounted]);
 
-  const handleColorChange = (key: string, value: string) => {
-    setTheme(prev => ({ ...prev, [key]: value }));
+  const handleColorChange = (key: ThemeColorKey, value: string, mode: ThemeMode) => {
+    setThemeColors(prev => ({
+      ...prev,
+      [mode]: {
+        ...prev[mode],
+        [key]: value,
+      },
+    }));
   };
 
   const generateThemeCode = () => {
     let code = `:root {\n`;
-    Object.entries(theme).forEach(([key, value]) => {
+    // Light theme
+    Object.entries(themeColors.light).forEach(([key, value]) => {
+      if (key === 'radius') {
+        code += `  --${key}: ${value};\n`;
+      } else {
+        code += `  --${key}: hsl(${value});\n`;
+      }
+    });
+    code += `}\n\n`;
+
+    // Dark theme
+    code += `.dark {\n`;
+    Object.entries(themeColors.dark).forEach(([key, value]) => {
       if (key === 'radius') {
         code += `  --${key}: ${value};\n`;
       } else {
@@ -108,6 +176,7 @@ export default function ThemeCreator() {
       }
     });
     code += `}\n`;
+
     return code;
   };
 
@@ -118,22 +187,44 @@ export default function ThemeCreator() {
     toast('Theme code has been copied to your clipboard');
   };
 
-  // Generate inline styles for the preview container
-  const previewStyles = Object.entries(theme).reduce(
-    (styles, [key, value]) => {
-      if (key === 'radius') {
-        styles[`--${key}`] = value;
-      } else {
-        // Format as hsl() for CSS variables - this is crucial for shadcn components
-        styles[`--${key}`] = `hsl(${value})`;
-      }
-      return styles;
-    },
-    {} as Record<string, string>
-  );
+  // Generate inline styles for the preview container based on current theme
+  const getPreviewStyles = () => {
+    if (!mounted) return {};
+
+    const mode =
+      currentTheme === 'dark' ||
+      (currentTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ? 'dark'
+        : 'light';
+
+    const activeTheme = themeColors[mode];
+
+    return Object.entries(activeTheme).reduce(
+      (styles, [key, value]) => {
+        if (key === 'radius') {
+          styles[`--${key}`] = value;
+        } else {
+          // Format as hsl() for CSS variables
+          styles[`--${key}`] = `hsl(${value})`;
+        }
+        return styles;
+      },
+      {} as Record<string, string>
+    );
+  };
+
+  if (!mounted) {
+    return <div>Loading...</div>;
+  }
+
+  const activeMode =
+    currentTheme === 'dark' ||
+    (currentTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      ? 'dark'
+      : 'light';
 
   return (
-    <div className='flex flex-col min-h-screen' style={previewStyles}>
+    <div className='flex flex-col min-h-screen' style={getPreviewStyles()}>
       <header className='border-b'>
         <div className='container flex items-center justify-between h-16 px-4'>
           <h1 className='text-2xl font-bold'>ShadCN Theme Creator</h1>
@@ -143,6 +234,7 @@ export default function ThemeCreator() {
               Copy Code
             </Button>
             <Button size='sm'>Generate Theme</Button>
+            <ModeToggle />
           </div>
         </div>
       </header>
@@ -152,21 +244,33 @@ export default function ThemeCreator() {
         <div className='w-full md:w-1/3 border-r'>
           <div className='p-4'>
             <h2 className='text-xl font-bold mb-4'>Theme Properties</h2>
+            <div className='flex items-center justify-between mb-4'>
+              <h3 className='text-lg font-semibold'>Editing {activeMode} theme</h3>
+              <Button
+                variant='outline'
+                onClick={() => setTheme(currentTheme === 'dark' ? 'light' : 'dark')}
+              >
+                Switch to {currentTheme === 'dark' ? 'Light' : 'Dark'} Mode
+              </Button>
+            </div>
+
             <Textarea
               className='mb-4 h-24 font-mono text-sm'
               placeholder='Theme description...'
               defaultValue='A theme inspired by modern design principles. Clean and professional with a touch of personality.'
             />
 
-            <ScrollArea className='h-[calc(100vh-200px)]'>
+            <ScrollArea className='h-[calc(100vh-250px)]'>
               <div className='space-y-4 pr-4'>
                 {/* Color pickers */}
-                {Object.entries(theme).map(([key, value]) => (
+                {Object.entries(themeColors[activeMode]).map(([key, value]) => (
                   <ColorPicker
-                    key={key}
-                    label={key}
+                    key={`${activeMode}-${key}`}
+                    label={key as string}
                     value={value}
-                    onChange={newValue => handleColorChange(key, newValue)}
+                    onChange={newValue =>
+                      handleColorChange(key as ThemeColorKey, newValue, activeMode)
+                    }
                   />
                 ))}
               </div>

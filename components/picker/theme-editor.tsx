@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { HslColorPicker } from 'react-colorful';
 import ColorPicker from '@/components/picker/color-picker';
-import { ThemeMode, ThemeColors, EditorMode } from '@/lib/picker/theme-utils';
+import { ThemeMode, ThemeColors, EditorMode, isSidebarKey } from '@/lib/picker/theme-utils';
 import { useEffect, useRef } from 'react';
 
 // Import custom CSS for the hue picker
@@ -144,15 +144,37 @@ export default function ThemeEditor({
           <>
             <ScrollArea className='h-[calc(100vh-250px)]'>
               <div className='space-y-4 pr-4'>
-                {/* Color pickers */}
-                {Object.entries(themeColors[activeMode]).map(([key, value]) => (
-                  <ColorPicker
-                    key={`${activeMode}-${key}`}
-                    label={key}
-                    value={value}
-                    onChange={newValue => onColorChange(key, newValue, activeMode)}
-                  />
-                ))}
+                {/* Main Theme Colors */}
+                <div>
+                  <h3 className='text-base font-medium mb-2'>Main Theme</h3>
+                  {Object.entries(themeColors[activeMode])
+                    .filter(([key]) => !isSidebarKey(key))
+                    .map(([key, value]) => (
+                      <ColorPicker
+                        key={`${activeMode}-${key}`}
+                        label={key}
+                        value={value}
+                        onChange={newValue => onColorChange(key, newValue, activeMode)}
+                      />
+                    ))}
+                </div>
+
+                <Separator className='my-4' />
+
+                {/* Sidebar Theme Colors */}
+                <div>
+                  <h3 className='text-base font-medium mb-2'>Sidebar Theme</h3>
+                  {Object.entries(themeColors[activeMode])
+                    .filter(([key]) => isSidebarKey(key))
+                    .map(([key, value]) => (
+                      <ColorPicker
+                        key={`${activeMode}-${key}`}
+                        label={key}
+                        value={value}
+                        onChange={newValue => onColorChange(key, newValue, activeMode)}
+                      />
+                    ))}
+                </div>
               </div>
             </ScrollArea>
           </>

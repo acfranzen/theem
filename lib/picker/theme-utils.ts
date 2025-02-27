@@ -98,8 +98,24 @@ export const randomizeTheme = (
   themeColors: Record<ThemeMode, ThemeColors>
 ): { updatedThemes: Record<ThemeMode, ThemeColors>; newHue: number } => {
   const newHue = getRandomHue();
-  // Continue to use hue-only approach for randomization to maintain compatibility
-  const updatedThemes = updateAllHues(themeColors, newHue);
+
+  // Create a deep copy of the theme colors
+  const updatedThemes: Record<ThemeMode, ThemeColors> = JSON.parse(JSON.stringify(themeColors));
+
+  // Update all themes with the new hue
+  (Object.keys(themeColors) as ThemeMode[]).forEach(mode => {
+    Object.entries(themeColors[mode]).forEach(([key, value]) => {
+      if (key !== 'radius') {
+        const parts = value.split(' ');
+        if (parts.length >= 1) {
+          parts[0] = newHue.toString();
+          updatedThemes[mode][key] = parts.join(' ');
+        }
+      }
+    });
+  });
+
+  // Display a toast notification
   toast(`Theme randomized! New hue: ${newHue}`);
 
   return { updatedThemes, newHue };
@@ -184,6 +200,13 @@ export const toCamelCase = (str: string): string => {
 };
 
 /**
+ * Check if a key is a sidebar-related theme variable
+ */
+export const isSidebarKey = (key: string): boolean => {
+  return key.startsWith('sidebar-');
+};
+
+/**
  * Handle color change for a specific color with complete HSL values
  * This is a utility function intended to be used with useCallback in components
  *
@@ -227,11 +250,11 @@ export const updateThemeColor = (params: {
 
     // Apply the updated theme to DOM
     const activeMode = getActiveThemeMode(currentTheme);
-    applyThemeToDOM(themeColorsRef.current, activeMode, document.documentElement, false);
+    applyThemeToDOM(updatedThemes, activeMode, document.documentElement, false);
 
     // Also update the inactive theme in data attributes
     const inactiveMode: ThemeMode = activeMode === 'light' ? 'dark' : 'light';
-    const inactiveTheme = themeColorsRef.current[inactiveMode];
+    const inactiveTheme = updatedThemes[inactiveMode];
 
     Object.entries(inactiveTheme).forEach(([themeKey, themeValue]) => {
       const dataKey = toCamelCase(`${inactiveMode}-${themeKey}`);
@@ -239,7 +262,13 @@ export const updateThemeColor = (params: {
       if (themeKey === 'radius') {
         document.documentElement.dataset[dataKey] = themeValue;
       } else {
-        document.documentElement.dataset[dataKey] = `hsl(${themeValue})`;
+        // Special handling for sidebar background
+        if (themeKey === 'sidebar-background') {
+          const sidebarKey = toCamelCase(`${inactiveMode}-sidebar`);
+          document.documentElement.dataset[sidebarKey] = `hsl(${themeValue})`;
+        } else {
+          document.documentElement.dataset[dataKey] = `hsl(${themeValue})`;
+        }
       }
     });
 
@@ -271,31 +300,53 @@ export const updateAllThemeHues = (params: {
   // Store the new hue value
   currentHueRef.current = newHue;
 
+  // Create a copy of the theme colors to work with
+  const updatedThemes: Record<ThemeMode, ThemeColors> = JSON.parse(
+    JSON.stringify(themeColorsRef.current)
+  );
+
+  // Update both themes (light and dark) with the new hue
+  (Object.keys(themeColorsRef.current) as ThemeMode[]).forEach(mode => {
+    Object.entries(themeColorsRef.current[mode]).forEach(([key, value]) => {
+      if (key !== 'radius') {
+        const parts = value.split(' ');
+        if (parts.length >= 1) {
+          parts[0] = newHue.toString();
+          updatedThemes[mode][key] = parts.join(' ');
+        }
+      }
+    });
+  });
+
+  // Update the reference with our changes
+  themeColorsRef.current = updatedThemes;
+
   // Get current active theme mode
   const activeMode = getActiveThemeMode(currentTheme);
 
-  // For each color in the active theme, call handleColorChange with updated hue
-  Object.entries(themeColorsRef.current[activeMode]).forEach(([key, value]) => {
-    if (key !== 'radius') {
-      const parts = value.split(' ');
-      if (parts.length >= 3) {
-        // Only update the hue part
-        parts[0] = newHue.toString();
-        const newValue = parts.join(' ');
+  // Apply the updated theme to DOM
+  applyThemeToDOM(updatedThemes, activeMode, document.documentElement, false);
 
-        // Use handleColorChange to update each color
-        updateThemeColor({
-          themeColorsRef,
-          key,
-          value: newValue,
-          mode: activeMode,
-          currentTheme,
-          currentHueRef,
-          setForceEditorUpdate,
-        });
+  // Update the inactive theme data attributes
+  const inactiveMode: ThemeMode = activeMode === 'light' ? 'dark' : 'light';
+  Object.entries(updatedThemes[inactiveMode]).forEach(([key, value]) => {
+    const dataKey = toCamelCase(`${inactiveMode}-${key}`);
+
+    if (key === 'radius') {
+      document.documentElement.dataset[dataKey] = value;
+    } else {
+      // Special handling for sidebar background
+      if (key === 'sidebar-background') {
+        const sidebarKey = toCamelCase(`${inactiveMode}-sidebar`);
+        document.documentElement.dataset[sidebarKey] = `hsl(${value})`;
+      } else {
+        document.documentElement.dataset[dataKey] = `hsl(${value})`;
       }
     }
   });
+
+  // Force UI update
+  setForceEditorUpdate(prev => prev + 1);
 };
 
 /**
@@ -363,8 +414,13 @@ export const applyThemeToDOM = (
       if (key === 'radius') {
         targetElement.style.setProperty(`--${key}`, value);
       } else {
-        // Format properly as HSL
-        targetElement.style.setProperty(`--${key}`, `hsl(${value})`);
+        // Handle the special case for sidebar background
+        if (key === 'sidebar-background') {
+          targetElement.style.setProperty('--sidebar', `hsl(${value})`);
+        } else {
+          // Format properly as HSL for all other properties
+          targetElement.style.setProperty(`--${key}`, `hsl(${value})`);
+        }
       }
     });
   }
@@ -376,8 +432,13 @@ export const applyThemeToDOM = (
         if (key === 'radius') {
           targetElement.style.setProperty(`--${key}`, value);
         } else {
-          // Format properly as HSL
-          targetElement.style.setProperty(`--${key}`, `hsl(${value})`);
+          // Handle the special case for sidebar background
+          if (key === 'sidebar-background') {
+            targetElement.style.setProperty('--sidebar', `hsl(${value})`);
+          } else {
+            // Format properly as HSL
+            targetElement.style.setProperty(`--${key}`, `hsl(${value})`);
+          }
         }
       });
     } else {
@@ -390,7 +451,13 @@ export const applyThemeToDOM = (
         if (key === 'radius') {
           targetElement.dataset[dataKey] = value;
         } else {
-          targetElement.dataset[dataKey] = `hsl(${value})`;
+          if (key === 'sidebar-background') {
+            // Store the sidebar background correctly in data attributes
+            const sidebarKey = toCamelCase('dark-sidebar');
+            targetElement.dataset[sidebarKey] = `hsl(${value})`;
+          } else {
+            targetElement.dataset[dataKey] = `hsl(${value})`;
+          }
         }
       });
     }

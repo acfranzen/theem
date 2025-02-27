@@ -4,7 +4,7 @@ import { Manrope } from 'next/font/google';
 import { UserProvider } from '@/lib/auth';
 import { getUser } from '@/lib/db/queries';
 import { ThemeProvider } from '@/lib/providers/theme-provider';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <UserProvider userPromise={userPromise}>
             <SidebarProvider>
               <AppSidebar />
-              <main>{children}</main>
+              <SidebarInset>{children}</SidebarInset>
             </SidebarProvider>
           </UserProvider>
         </ThemeProvider>

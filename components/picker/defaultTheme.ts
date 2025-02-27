@@ -20,6 +20,15 @@ export const defaultTheme = {
     input: '295 36.9% 78.2%',
     ring: '295 35.8% 41.6%',
     radius: '0.5rem',
+    // Sidebar-specific theming variables
+    'sidebar-background': '295 29.4% 98%',
+    'sidebar-foreground': '295 37.9% 31.6%',
+    'sidebar-primary': '295 37.9% 31.6%',
+    'sidebar-primary-foreground': '295 0% 100%',
+    'sidebar-accent': '295 38.2% 89.2%',
+    'sidebar-accent-foreground': '295 33.8% 26.1%',
+    'sidebar-border': '295 34.1% 64.3%',
+    'sidebar-ring': '295 35.8% 41.6%',
   },
   dark: {
     background: '295 0% 13%',
@@ -42,5 +51,14 @@ export const defaultTheme = {
     input: '295 37.9% 31.6%',
     ring: '295 29.6% 50.4%',
     radius: '0.5rem',
+    // Sidebar-specific theming variables
+    'sidebar-background': '295 7% 16%',
+    'sidebar-foreground': '295 29.4% 96.7%',
+    'sidebar-primary': '295 38.2% 89.2%',
+    'sidebar-primary-foreground': '295 33.8% 26.1%',
+    'sidebar-accent': '295 31.5% 21.8%',
+    'sidebar-accent-foreground': '295 29.4% 96.7%',
+    'sidebar-border': '295 29.6% 35.4%',
+    'sidebar-ring': '295 29.6% 50.4%',
   },
 };

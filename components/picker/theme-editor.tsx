@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { HslColorPicker } from 'react-colorful';
 import ColorPicker from '@/components/picker/color-picker';
-import { ThemeMode, ThemeColors, EditorMode, isSidebarKey } from '@/lib/picker/theme-utils';
+import { ThemeMode, ThemeColors, EditorMode } from '@/lib/picker/theme-utils';
 import { useEffect, useRef } from 'react';
 import {
   Accordion,
@@ -19,6 +19,38 @@ import {
 
 // Import custom CSS for the hue picker
 import './hue-picker.css';
+
+// Token category enum
+export type TokenCategory = 'core' | 'components' | 'sidebar';
+
+// Helper function to determine token category
+const getTokenCategory = (key: string): TokenCategory => {
+  // Sidebar tokens
+  if (key.startsWith('sidebar-')) {
+    return 'sidebar';
+  }
+
+  // Component tokens
+  const componentTokens = [
+    'muted',
+    'muted-foreground',
+    'accent',
+    'accent-foreground',
+    'destructive',
+    'destructive-foreground',
+    'border',
+    'input',
+    'ring',
+    'radius',
+  ];
+
+  if (componentTokens.some(token => key === token)) {
+    return 'components';
+  }
+
+  // Core tokens (default)
+  return 'core';
+};
 
 interface ThemeEditorProps {
   themeColors: Record<ThemeMode, ThemeColors>;
@@ -137,20 +169,42 @@ export default function ThemeEditor({
         {/* Advanced Mode UI */}
         {editorMode === 'advanced' && (
           <>
-            <ScrollArea className='h-[calc(100vh-250px)]'>
+            <ScrollArea>
               <div className='space-y-4 pr-4'>
-                <Accordion type='single' collapsible defaultValue='main-theme' className='w-full'>
-                  {/* Main Theme Colors */}
-                  <AccordionItem value='main-theme'>
+                <Accordion type='single' collapsible defaultValue='core-theme' className='w-full'>
+                  {/* Core Theme Colors */}
+                  <AccordionItem value='core-theme'>
                     <AccordionTrigger className='py-2'>
-                      <span className='text-base font-medium'>Main Theme</span>
+                      <span className='text-base font-medium'>Core Theme</span>
                     </AccordionTrigger>
                     <AccordionContent>
                       <Separator className='my-2' />
 
                       <div className='space-y-3'>
                         {Object.entries(themeColors[activeMode])
-                          .filter(([key]) => !isSidebarKey(key))
+                          .filter(([key]) => getTokenCategory(key) === 'core')
+                          .map(([key, value]) => (
+                            <ColorPicker
+                              key={`${activeMode}-${key}`}
+                              label={key}
+                              value={value}
+                              onChange={newValue => onColorChange(key, newValue, activeMode)}
+                            />
+                          ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  {/* UI Component Colors */}
+                  <AccordionItem value='component-theme'>
+                    <AccordionTrigger className='py-2'>
+                      <span className='text-base font-medium'>UI Components</span>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <Separator className='my-2' />
+                      <div className='space-y-3'>
+                        {Object.entries(themeColors[activeMode])
+                          .filter(([key]) => getTokenCategory(key) === 'components')
                           .map(([key, value]) => (
                             <ColorPicker
                               key={`${activeMode}-${key}`}
@@ -172,7 +226,7 @@ export default function ThemeEditor({
                       <Separator className='my-2' />
                       <div className='space-y-3'>
                         {Object.entries(themeColors[activeMode])
-                          .filter(([key]) => isSidebarKey(key))
+                          .filter(([key]) => getTokenCategory(key) === 'sidebar')
                           .map(([key, value]) => (
                             <ColorPicker
                               key={`${activeMode}-${key}`}

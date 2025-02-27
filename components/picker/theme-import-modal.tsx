@@ -156,8 +156,7 @@ export default function ThemeImportModal({ open, onOpenChange, onImport }: Theme
           <Info className='h-4 w-4' />
           <AlertTitle>Import Format</AlertTitle>
           <AlertDescription className='text-xs'>
-            Your theme should be in the <code>@layer base</code> format with <code>:root</code> and{' '}
-            <code>.dark</code> sections, containing CSS variables like{' '}
+            Your theme should be in the globals.css format below, containing CSS variables like{' '}
             <code>--background: hsl(295 29.4% 96.7%)</code>
           </AlertDescription>
         </Alert>

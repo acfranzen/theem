@@ -27,6 +27,8 @@
   border-radius: 12px;
   background: var(--background);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  pointer-events: auto;
+  touch-action: none;
 }
 
 /* Hide the saturation panel */
@@ -39,6 +41,7 @@
   height: 20px;
   border-radius: 10px;
   margin-bottom: 0;
+  cursor: grab;
 }
 
 /* Customize the hue slider pointer */
@@ -48,4 +51,14 @@
   border-radius: 50%;
   border: 2px solid white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  cursor: grab;
+}
+
+/* Active state */
+.hue-slider-only .react-colorful__hue:active {
+  cursor: grabbing;
+}
+
+.hue-slider-only .react-colorful__hue-pointer:active {
+  cursor: grabbing;
 }

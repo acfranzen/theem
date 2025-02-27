@@ -112,6 +112,13 @@ export const extractHueFromColor = (colorValue: string): number => {
 };
 
 /**
+ * Helper function to convert hyphenated keys to camelCase for dataset properties
+ */
+export const toCamelCase = (str: string): string => {
+  return str.replace(/-([a-z])/g, (match, group) => group.toUpperCase());
+};
+
+/**
  * Generate inline styles for the preview container based on current theme
  * @param themeColors Current theme colors
  * @param activeMode Current theme mode (light or dark)
@@ -157,20 +164,55 @@ export const getActiveThemeMode = (currentTheme: string | undefined): ThemeMode 
  * @param themeColors Current theme colors
  * @param mode Current theme mode (light or dark)
  * @param targetElement Optional element to apply styles to (defaults to document.documentElement)
+ * @param forceApply Optional flag to force apply even if mode conditions aren't met
  */
 export const applyThemeToDOM = (
   themeColors: Record<ThemeMode, ThemeColors>,
   mode: ThemeMode,
-  targetElement: HTMLElement = document.documentElement
+  targetElement: HTMLElement = document.documentElement,
+  forceApply: boolean = false
 ): void => {
   if (typeof window === 'undefined') return; // Guard for SSR
 
   const activeTheme = themeColors[mode];
-  Object.entries(activeTheme).forEach(([key, value]) => {
-    if (key === 'radius') {
-      targetElement.style.setProperty(`--${key}`, value);
+
+  // Apply theme colors based on theme type
+  if (mode === 'light' || forceApply) {
+    // For light theme, apply directly to document root
+    Object.entries(activeTheme).forEach(([key, value]) => {
+      if (key === 'radius') {
+        targetElement.style.setProperty(`--${key}`, value);
+      } else {
+        // Format properly as HSL
+        targetElement.style.setProperty(`--${key}`, `hsl(${value})`);
+      }
+    });
+  }
+
+  // For dark theme, only apply if dark mode is active or force apply is true
+  if (mode === 'dark') {
+    if (document.documentElement.classList.contains('dark') || forceApply) {
+      Object.entries(activeTheme).forEach(([key, value]) => {
+        if (key === 'radius') {
+          targetElement.style.setProperty(`--${key}`, value);
+        } else {
+          // Format properly as HSL
+          targetElement.style.setProperty(`--${key}`, `hsl(${value})`);
+        }
+      });
     } else {
-      targetElement.style.setProperty(`--${key}`, `hsl(${value})`);
+      // Store dark theme values in data attributes for later use
+      // This avoids applying them directly when not in dark mode
+      Object.entries(activeTheme).forEach(([key, value]) => {
+        // Convert key to camelCase for dataset property
+        const dataKey = toCamelCase(`dark-${key}`);
+
+        if (key === 'radius') {
+          targetElement.dataset[dataKey] = value;
+        } else {
+          targetElement.dataset[dataKey] = `hsl(${value})`;
+        }
+      });
     }
-  });
+  }
 };

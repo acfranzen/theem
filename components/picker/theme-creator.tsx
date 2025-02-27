@@ -19,6 +19,7 @@ import {
   getThemePreviewStyles,
   getActiveThemeMode,
   applyThemeToDOM,
+  toCamelCase,
 } from '@/lib/picker/theme-utils';
 import ThemeEditor from '@/components/picker/theme-editor';
 import ThemePreview from '@/components/picker/theme-preview';
@@ -91,8 +92,6 @@ export default function ThemeCreator() {
   // Update all hues with new value without re-rendering
   const handleHueChange = useCallback(
     (newHue: number) => {
-      console.log('ThemeCreator: Applying hue change:', newHue);
-
       // Store the new hue value
       currentHueRef.current = newHue;
 
@@ -100,11 +99,30 @@ export default function ThemeCreator() {
       const updatedThemes = updateAllHues(themeColorsRef.current, newHue);
       themeColorsRef.current = updatedThemes;
 
-      // Apply changes directly to DOM for current mode
+      // Get the current active mode
       const activeMode = getActiveThemeMode(currentTheme);
-      applyThemeToDOM(themeColorsRef.current, activeMode);
 
-      // Force a UI refresh to ensure all elements reflect the new theme
+      // Apply the active theme to DOM - this prevents dark theme from overriding light theme
+      // Use forceApply=false here since we only want to apply the current theme
+      applyThemeToDOM(themeColorsRef.current, activeMode, document.documentElement, false);
+
+      // For the inactive theme, we'll use a data attribute approach
+      const inactiveMode: ThemeMode = activeMode === 'light' ? 'dark' : 'light';
+
+      // Store the inactive theme using data attributes
+      const inactiveTheme = themeColorsRef.current[inactiveMode];
+      Object.entries(inactiveTheme).forEach(([key, value]) => {
+        // Convert key to camelCase for dataset property
+        const dataKey = toCamelCase(`${inactiveMode}-${key}`);
+
+        if (key === 'radius') {
+          document.documentElement.dataset[dataKey] = value;
+        } else {
+          document.documentElement.dataset[dataKey] = `hsl(${value})`;
+        }
+      });
+
+      // Force a UI update to ensure all components reflect the new theme
       setForceEditorUpdate(prev => prev + 1);
     },
     [currentTheme]
@@ -116,11 +134,30 @@ export default function ThemeCreator() {
     currentHueRef.current = newHue;
     themeColorsRef.current = updatedThemes;
 
-    // Apply changes directly to DOM
-    const mode = getActiveThemeMode(currentTheme);
-    applyThemeToDOM(themeColorsRef.current, mode);
+    // Get the current active mode
+    const activeMode = getActiveThemeMode(currentTheme);
 
-    // Force the editor to update its display values
+    // Apply the active theme to DOM
+    // Use forceApply=false here since we only want to apply the current theme
+    applyThemeToDOM(themeColorsRef.current, activeMode, document.documentElement, false);
+
+    // For the inactive theme, we'll use data attributes
+    const inactiveMode: ThemeMode = activeMode === 'light' ? 'dark' : 'light';
+
+    // Store the inactive theme using data attributes
+    const inactiveTheme = themeColorsRef.current[inactiveMode];
+    Object.entries(inactiveTheme).forEach(([key, value]) => {
+      // Convert key to camelCase for dataset property
+      const dataKey = toCamelCase(`${inactiveMode}-${key}`);
+
+      if (key === 'radius') {
+        document.documentElement.dataset[dataKey] = value;
+      } else {
+        document.documentElement.dataset[dataKey] = `hsl(${value})`;
+      }
+    });
+
+    // Trigger a force update on the parent to refresh UI elements
     setForceEditorUpdate(prev => prev + 1);
   }, [currentTheme]);
 
@@ -131,8 +168,19 @@ export default function ThemeCreator() {
 
   // Handle theme toggle
   const handleThemeToggle = useCallback(() => {
-    // When we toggle theme, we need to force an update
-    setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    // Get the current theme mode and determine what we're switching to
+    const currentMode = getActiveThemeMode(currentTheme);
+    const newMode: ThemeMode = currentMode === 'light' ? 'dark' : 'light';
+
+    // Apply the new theme with forceApply=true to ensure it's applied
+    // regardless of current theme class state
+    applyThemeToDOM(themeColorsRef.current, newMode, document.documentElement, true);
+
+    // Toggle the theme which will update the classes
+    setTheme(newMode);
+
+    // Force a UI update after theme change
+    setForceEditorUpdate(prev => prev + 1);
   }, [currentTheme, setTheme]);
 
   // Handle copy to clipboard
@@ -170,9 +218,8 @@ export default function ThemeCreator() {
       </header>
 
       <div className='flex flex-col md:flex-row flex-1'>
-        {/* Theme Editor Component - we pass forceEditorUpdate to make it re-render only when needed */}
+        {/* Theme Editor Component - avoid remounting with key changes */}
         <ThemeEditor
-          key={`editor-${forceEditorUpdate}`}
           themeColors={themeColorsRef.current}
           activeMode={activeMode}
           currentHue={currentHueRef.current}

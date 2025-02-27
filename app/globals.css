@@ -76,8 +76,49 @@
 }
 
 @layer utilities {
+  /* Font family classes for each font */
+  :root {
+    --font-family: var(--font-manrope);
+  }
+
   body {
-    font-family: 'Manrope', Arial, Helvetica, sans-serif;
+    font-family: var(--font-family);
+  }
+
+  .font-manrope {
+    --font-family: var(--font-manrope);
+  }
+
+  .font-inter {
+    --font-family: var(--font-inter);
+  }
+
+  .font-roboto {
+    --font-family: var(--font-roboto);
+  }
+
+  .font-open-sans {
+    --font-family: var(--font-open-sans);
+  }
+
+  .font-playfair-display {
+    --font-family: var(--font-playfair);
+  }
+
+  .font-montserrat {
+    --font-family: var(--font-montserrat);
+  }
+
+  .font-lato {
+    --font-family: var(--font-lato);
+  }
+
+  .font-merriweather {
+    --font-family: var(--font-merriweather);
+  }
+
+  .font-fira-code {
+    --font-family: var(--font-fira-code);
   }
 }
 
@@ -160,6 +201,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-family);
   }
 
   /* Enable pointer events globally */

@@ -16,6 +16,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import FontSelector from '@/components/picker/font-selector';
+import { FontOption } from '@/lib/picker/font-utils';
 
 // Import custom CSS for the hue picker
 import './hue-picker.css';
@@ -58,11 +60,13 @@ interface ThemeEditorProps {
   currentHue: number;
   editorMode: EditorMode;
   currentTheme: string | undefined;
+  currentFont: string;
   onColorChange: (key: string, value: string, mode: ThemeMode) => void;
   onHueChange: (newHue: number) => void;
   onRandomizeTheme: () => void;
   onEditorModeChange: (mode: EditorMode) => void;
   onThemeToggle: () => void;
+  onFontChange: (font: FontOption) => void;
 }
 
 // Helper to convert HSL to hex
@@ -85,11 +89,13 @@ export default function ThemeEditor({
   currentHue,
   editorMode,
   currentTheme,
+  currentFont,
   onColorChange,
   onHueChange,
   onRandomizeTheme,
   onEditorModeChange,
   onThemeToggle,
+  onFontChange,
 }: ThemeEditorProps) {
   // Use a ref for the current hue to enable direct DOM updates
   const hueValueRef = useRef<HTMLSpanElement>(null);
@@ -137,6 +143,12 @@ export default function ThemeEditor({
               Advanced
             </Label>
           </div>
+        </div>
+
+        {/* Font Selector */}
+        <div className='space-y-4 mb-6 border-b pb-4'>
+          <Label className='text-base font-medium'>Font Family</Label>
+          <FontSelector value={currentFont} onValueChange={onFontChange} />
         </div>
 
         {/* Simple Mode UI */}

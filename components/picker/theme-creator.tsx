@@ -29,6 +29,7 @@ import { defaultTheme } from './defaultTheme';
 import { ModeToggle } from '../mode-toggle';
 import { SidebarTrigger } from '../ui/sidebar';
 import { ScrollArea } from '../ui/scroll-area';
+import { FontOption, applyFontToDocument, fontOptions } from '@/lib/picker/font-utils';
 
 // Type for theme color key
 type ThemeColorKey = keyof typeof defaultTheme.light;
@@ -46,6 +47,7 @@ export default function ThemeCreator() {
   const [mounted, setMounted] = useState(false);
   const [editorMode, setEditorMode] = useState<EditorMode>('simple');
   const currentHueRef = useRef<number>(295); // Use ref instead of state
+  const [currentFont, setCurrentFont] = useState<string>('Manrope'); // Default font
 
   // Track when we need to force an editor update (for slider and UI refresh)
   const [forceEditorUpdate, setForceEditorUpdate] = useState(0);
@@ -67,7 +69,13 @@ export default function ThemeCreator() {
 
     // Apply the theme on initial mount
     applyThemeToDOM(themeColorsRef.current, mode);
-  }, [mounted, currentTheme]);
+
+    // Apply the default font on initial mount
+    const defaultFont = fontOptions.find(font => font.family === currentFont);
+    if (defaultFont) {
+      applyFontToDocument(defaultFont);
+    }
+  }, [mounted, currentTheme, currentFont]);
 
   // Update all hues with new value without re-rendering
   const handleHueChange = useCallback(
@@ -210,6 +218,12 @@ export default function ThemeCreator() {
     [currentTheme]
   );
 
+  // Handle font change
+  const handleFontChange = useCallback((font: FontOption) => {
+    setCurrentFont(font.family);
+    // Font will be applied by the FontSelector component through the FontProvider
+  }, []);
+
   if (!mounted) {
     return <div>Loading...</div>;
   }
@@ -249,11 +263,13 @@ export default function ThemeCreator() {
           currentHue={currentHueRef.current}
           editorMode={editorMode}
           currentTheme={currentTheme}
+          currentFont={currentFont}
           onColorChange={handleColorChange}
           onHueChange={handleHueChange}
           onRandomizeTheme={handleRandomizeTheme}
           onEditorModeChange={handleEditorModeChange}
           onThemeToggle={handleThemeToggle}
+          onFontChange={handleFontChange}
         />
 
         {/* Theme Preview Component */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -18,26 +18,31 @@ import {
   extractHueFromColor,
   getThemePreviewStyles,
   getActiveThemeMode,
+  applyThemeToDOM,
 } from '@/lib/picker/theme-utils';
 import ThemeEditor from '@/components/picker/theme-editor';
 import ThemePreview from '@/components/picker/theme-preview';
 import { defaultTheme } from './defaultTheme';
 
-// Default theme values
-
 // Type for theme color key
 type ThemeColorKey = keyof typeof defaultTheme.light;
 
 export default function ThemeCreator() {
-  const [themeColors, setThemeColors] = useState<Record<ThemeMode, ThemeColors>>({
+  // Use a ref to store the current theme without triggering re-renders
+  const themeColorsRef = useRef<Record<ThemeMode, ThemeColors>>({
     light: { ...defaultTheme.light },
     dark: { ...defaultTheme.dark },
   });
+
+  // Only use state for UI-driven elements that need rendering
   const [copied, setCopied] = useState(false);
   const { theme: currentTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [editorMode, setEditorMode] = useState<EditorMode>('advanced');
-  const [currentHue, setCurrentHue] = useState<number>(295); // Default hue value
+  const [editorMode, setEditorMode] = useState<EditorMode>('simple');
+  const currentHueRef = useRef<number>(295); // Use ref instead of state
+
+  // Track when we need to force an editor update (for slider and UI refresh)
+  const [forceEditorUpdate, setForceEditorUpdate] = useState(0);
 
   // Handle hydration mismatch
   useEffect(() => {
@@ -49,76 +54,94 @@ export default function ThemeCreator() {
     if (!mounted) return;
 
     const mode = getActiveThemeMode(currentTheme);
-    const primaryColor = themeColors[mode].primary;
+    const primaryColor = themeColorsRef.current[mode].primary;
     const hue = extractHueFromColor(primaryColor);
-    setCurrentHue(hue);
-  }, [mounted, themeColors, currentTheme]);
+    currentHueRef.current = hue;
 
-  // When component mounts, apply the theme styles to document.documentElement
-  useEffect(() => {
-    if (!mounted) return;
+    // Apply the theme on initial mount
+    applyThemeToDOM(themeColorsRef.current, mode);
+  }, [mounted, currentTheme]);
 
-    const mode = getActiveThemeMode(currentTheme);
+  // Update color without re-rendering
+  const handleColorChange = useCallback(
+    (key: string, value: string, mode: ThemeMode) => {
+      // Update the ref directly
+      themeColorsRef.current = {
+        ...themeColorsRef.current,
+        [mode]: {
+          ...themeColorsRef.current[mode],
+          [key]: value,
+        },
+      };
 
-    // Apply active theme colors
-    const activeTheme = themeColors[mode];
-    Object.entries(activeTheme).forEach(([key, value]) => {
-      if (key === 'radius') {
-        document.documentElement.style.setProperty(`--${key}`, value);
-      } else {
-        document.documentElement.style.setProperty(`--${key}`, `hsl(${value})`);
+      // Update the DOM directly using our utility
+      const activeMode = getActiveThemeMode(currentTheme);
+      if (mode === activeMode) {
+        // Only apply to DOM if we're changing the active mode
+        if (key === 'radius') {
+          document.documentElement.style.setProperty(`--${key}`, value);
+        } else {
+          document.documentElement.style.setProperty(`--${key}`, `hsl(${value})`);
+        }
       }
-    });
+    },
+    [currentTheme]
+  );
 
-    // Cleanup function
-    return () => {
-      // Reset to default theme or clean up as needed
-      Object.keys(themeColors[mode]).forEach(key => {
-        document.documentElement.style.removeProperty(`--${key}`);
-      });
-    };
-  }, [themeColors, currentTheme, mounted]);
+  // Update all hues with new value without re-rendering
+  const handleHueChange = useCallback(
+    (newHue: number) => {
+      console.log('ThemeCreator: Applying hue change:', newHue);
 
-  const handleColorChange = (key: string, value: string, mode: ThemeMode) => {
-    setThemeColors(prev => ({
-      ...prev,
-      [mode]: {
-        ...prev[mode],
-        [key]: value,
-      },
-    }));
-  };
+      // Store the new hue value
+      currentHueRef.current = newHue;
 
-  // Update all hues with new value
-  const handleHueChange = (newHue: number) => {
-    setCurrentHue(newHue);
-    setThemeColors(updateAllHues(themeColors, newHue));
-  };
+      // Update all theme colors with the new hue
+      const updatedThemes = updateAllHues(themeColorsRef.current, newHue);
+      themeColorsRef.current = updatedThemes;
+
+      // Apply changes directly to DOM for current mode
+      const activeMode = getActiveThemeMode(currentTheme);
+      applyThemeToDOM(themeColorsRef.current, activeMode);
+
+      // Force a UI refresh to ensure all elements reflect the new theme
+      setForceEditorUpdate(prev => prev + 1);
+    },
+    [currentTheme]
+  );
 
   // Handle randomize theme
-  const handleRandomizeTheme = () => {
-    const { updatedThemes, newHue } = randomizeTheme(themeColors);
-    setCurrentHue(newHue);
-    setThemeColors(updatedThemes);
-  };
+  const handleRandomizeTheme = useCallback(() => {
+    const { updatedThemes, newHue } = randomizeTheme(themeColorsRef.current);
+    currentHueRef.current = newHue;
+    themeColorsRef.current = updatedThemes;
+
+    // Apply changes directly to DOM
+    const mode = getActiveThemeMode(currentTheme);
+    applyThemeToDOM(themeColorsRef.current, mode);
+
+    // Force the editor to update its display values
+    setForceEditorUpdate(prev => prev + 1);
+  }, [currentTheme]);
 
   // Handle editor mode change
-  const handleEditorModeChange = (mode: EditorMode) => {
+  const handleEditorModeChange = useCallback((mode: EditorMode) => {
     setEditorMode(mode);
-  };
+  }, []);
 
   // Handle theme toggle
-  const handleThemeToggle = () => {
+  const handleThemeToggle = useCallback(() => {
+    // When we toggle theme, we need to force an update
     setTheme(currentTheme === 'dark' ? 'light' : 'dark');
-  };
+  }, [currentTheme, setTheme]);
 
   // Handle copy to clipboard
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generateThemeCode(themeColors));
+  const copyToClipboard = useCallback(() => {
+    navigator.clipboard.writeText(generateThemeCode(themeColorsRef.current));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast('Theme code has been copied to your clipboard');
-  };
+  }, []);
 
   if (!mounted) {
     return <div>Loading...</div>;
@@ -129,7 +152,8 @@ export default function ThemeCreator() {
   return (
     <div
       className='flex flex-col min-h-screen'
-      style={getThemePreviewStyles(themeColors, activeMode)}
+      // Use inline styles for theme preview to avoid re-renders
+      style={getThemePreviewStyles(themeColorsRef.current, activeMode)}
     >
       <header className='border-b'>
         <div className='container flex items-center justify-between h-16 px-4'>
@@ -146,11 +170,12 @@ export default function ThemeCreator() {
       </header>
 
       <div className='flex flex-col md:flex-row flex-1'>
-        {/* Theme Editor Component */}
+        {/* Theme Editor Component - we pass forceEditorUpdate to make it re-render only when needed */}
         <ThemeEditor
-          themeColors={themeColors}
+          key={`editor-${forceEditorUpdate}`}
+          themeColors={themeColorsRef.current}
           activeMode={activeMode}
-          currentHue={currentHue}
+          currentHue={currentHueRef.current}
           editorMode={editorMode}
           currentTheme={currentTheme}
           onColorChange={handleColorChange}

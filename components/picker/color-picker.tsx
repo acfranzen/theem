@@ -20,55 +20,85 @@ export default function ColorPicker({ label, value, onChange }: ColorPickerProps
     return { h, s, l };
   };
 
-  const [hsl, setHsl] = useState(() => parseHslString(value));
-  // Track if the update is from internal state changes
-  const isInternalChange = useRef(false);
+  // Use refs to store current values without causing re-renders
+  const hslRef = useRef(parseHslString(value));
 
+  // State is only used for initial rendering and forced updates
+  const [_, forceUpdate] = useState(0);
+  const colorDisplayRef = useRef<HTMLButtonElement>(null);
+  const colorInputRef = useRef<HTMLInputElement>(null);
+  const colorLabelRef = useRef<HTMLSpanElement>(null);
+
+  // Initialize the refs and DOM elements on mount
   useEffect(() => {
-    // Only update local state if the change wasn't triggered internally
-    if (!isInternalChange.current) {
-      setHsl(parseHslString(value));
-    } else {
-      // Reset the flag after handling the update
-      isInternalChange.current = false;
-    }
+    hslRef.current = parseHslString(value);
+    updateDOMElements();
   }, [value]);
 
-  const handleHslChange = (newHsl: { h: number; s: number; l: number }) => {
-    // Set flag to indicate this is an internal change
-    isInternalChange.current = true;
+  // Update DOM elements directly to avoid re-renders
+  const updateDOMElements = () => {
+    const { h, s, l } = hslRef.current;
+    const formattedValue = `${Math.round(h)} ${Math.round(s)}% ${Math.round(l)}%`;
+    const colorCSS = `hsl(${formattedValue})`;
 
-    setHsl(newHsl);
-    // Format the HSL values correctly for the CSS variable
-    onChange(`${Math.round(newHsl.h)} ${Math.round(newHsl.s)}% ${Math.round(newHsl.l)}%`);
+    // Update DOM elements directly
+    if (colorDisplayRef.current) {
+      colorDisplayRef.current.style.backgroundColor = colorCSS;
+    }
+
+    if (colorInputRef.current) {
+      colorInputRef.current.value = formattedValue;
+    }
+
+    if (colorLabelRef.current) {
+      colorLabelRef.current.textContent = formattedValue;
+    }
   };
+
+  const handleHslChange = (newHsl: { h: number; s: number; l: number }) => {
+    // Update the ref
+    hslRef.current = newHsl;
+
+    // Update DOM directly
+    updateDOMElements();
+
+    // Format the HSL values correctly for the CSS variable and call onChange
+    const formattedValue = `${Math.round(newHsl.h)} ${Math.round(newHsl.s)}% ${Math.round(newHsl.l)}%`;
+    onChange(formattedValue);
+  };
+
+  // Format initial display value
+  const { h, s, l } = hslRef.current;
+  const initialDisplayValue = `${Math.round(h)} ${Math.round(s)}% ${Math.round(l)}%`;
 
   return (
     <div className='grid gap-1.5'>
       <div className='flex justify-between items-center'>
         <Label className='text-sm'>{label}</Label>
-        <span className='text-xs text-muted-foreground font-mono'>
-          {Math.round(hsl.h)} {Math.round(hsl.s)}% {Math.round(hsl.l)}%
+        <span ref={colorLabelRef} className='text-xs text-muted-foreground font-mono'>
+          {initialDisplayValue}
         </span>
       </div>
       <div className='flex gap-2 items-center'>
         <Popover>
           <PopoverTrigger asChild>
             <Button
+              ref={colorDisplayRef}
               variant='outline'
               className='w-8 h-8 p-0 border-2 rounded-md'
-              style={{ backgroundColor: `hsl(${hsl.h} ${hsl.s}% ${hsl.l}%)` }}
+              style={{ backgroundColor: `hsl(${initialDisplayValue})` }}
               aria-label={`Pick color for ${label}`}
             >
               <span className='sr-only'>Pick color</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent className='w-auto p-3'>
-            <HslColorPicker color={hsl} onChange={handleHslChange} />
+            <HslColorPicker color={hslRef.current} onChange={handleHslChange} />
           </PopoverContent>
         </Popover>
         <Input
-          value={`${Math.round(hsl.h)} ${Math.round(hsl.s)}% ${Math.round(hsl.l)}%`}
+          ref={colorInputRef}
+          defaultValue={initialDisplayValue}
           onChange={e => {
             try {
               const newHsl = parseHslString(e.target.value);

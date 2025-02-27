@@ -150,3 +150,27 @@ export const getActiveThemeMode = (currentTheme: string | undefined): ThemeMode 
     ? 'dark'
     : 'light';
 };
+
+/**
+ * Apply theme colors directly to DOM without requiring a React re-render
+ * This provides better performance for frequent color changes
+ * @param themeColors Current theme colors
+ * @param mode Current theme mode (light or dark)
+ * @param targetElement Optional element to apply styles to (defaults to document.documentElement)
+ */
+export const applyThemeToDOM = (
+  themeColors: Record<ThemeMode, ThemeColors>,
+  mode: ThemeMode,
+  targetElement: HTMLElement = document.documentElement
+): void => {
+  if (typeof window === 'undefined') return; // Guard for SSR
+
+  const activeTheme = themeColors[mode];
+  Object.entries(activeTheme).forEach(([key, value]) => {
+    if (key === 'radius') {
+      targetElement.style.setProperty(`--${key}`, value);
+    } else {
+      targetElement.style.setProperty(`--${key}`, `hsl(${value})`);
+    }
+  });
+};

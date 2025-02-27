@@ -6,10 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { HslColorPicker } from 'react-colorful';
 import ColorPicker from '@/components/picker/color-picker';
 import { ThemeMode, ThemeColors, EditorMode } from '@/lib/picker/theme-utils';
+import { useEffect, useRef } from 'react';
+
+// Import custom CSS for the hue picker
+import './hue-picker.css';
 
 interface ThemeEditorProps {
   themeColors: Record<ThemeMode, ThemeColors>;
@@ -24,6 +28,20 @@ interface ThemeEditorProps {
   onThemeToggle: () => void;
 }
 
+// Helper to convert HSL to hex
+const hslToHex = (h: number, s: number, l: number): string => {
+  l /= 100;
+  const a = (s * Math.min(l, 1 - l)) / 100;
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color)
+      .toString(16)
+      .padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+};
+
 export default function ThemeEditor({
   themeColors,
   activeMode,
@@ -36,6 +54,33 @@ export default function ThemeEditor({
   onEditorModeChange,
   onThemeToggle,
 }: ThemeEditorProps) {
+  // Use a ref for the current hue to enable direct DOM updates
+  const hueValueRef = useRef<HTMLSpanElement>(null);
+
+  // Update the DOM directly when currentHue changes
+  useEffect(() => {
+    if (hueValueRef.current) {
+      hueValueRef.current.textContent = `${Math.round(currentHue)}°`;
+    }
+  }, [currentHue]);
+
+  // Handler for color picker changes
+  const handleColorChange = (color: { h: number; s: number; l: number }) => {
+    // Make sure we have a valid color object with a numeric hue value
+    if (color && typeof color.h === 'number') {
+      // Round the hue value for consistency
+      const newHue = Math.round(color.h);
+
+      // Important: Pass the hue value to the parent component
+      onHueChange(newHue);
+
+      // Update the hue value display
+      if (hueValueRef.current) {
+        hueValueRef.current.textContent = `${newHue}°`;
+      }
+    }
+  };
+
   return (
     <div className='w-full md:w-1/3 border-r'>
       <div className='p-4'>
@@ -73,16 +118,17 @@ export default function ThemeEditor({
             <div className='space-y-4'>
               <div className='flex justify-between items-center'>
                 <Label className='text-base font-medium'>Theme Hue</Label>
-                <span className='text-sm font-mono'>{currentHue}°</span>
+                <span ref={hueValueRef} className='text-sm font-mono'>
+                  {Math.round(currentHue)}°
+                </span>
               </div>
-              <Slider
-                value={[currentHue]}
-                min={0}
-                max={360}
-                step={1}
-                onValueChange={value => onHueChange(value[0])}
-                className='py-2'
-              />
+              {/* Custom styled HSL color picker */}
+              <div className='hue-slider-only'>
+                <HslColorPicker
+                  color={{ h: currentHue, s: 100, l: 50 }}
+                  onChange={handleColorChange}
+                />
+              </div>
               <div className='flex w-full justify-center mt-2'>
                 <Button onClick={onRandomizeTheme} className='w-full' variant='outline'>
                   <RefreshCw className='w-4 h-4 mr-2' />

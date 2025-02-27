@@ -1,0 +1,51 @@
+/* Styling for hue picker only */
+.hue-picker-only .react-colorful {
+  height: auto;
+  width: 100%;
+}
+
+.hue-picker-only .react-colorful__saturation {
+  display: none;
+}
+
+.hue-picker-only .react-colorful__hue {
+  height: 20px;
+  border-radius: 5px;
+  margin-bottom: 0;
+}
+
+.hue-picker-only .react-colorful__hue-pointer {
+  width: 18px;
+  height: 18px;
+}
+
+/* Custom styling for the hue slider only */
+.hue-slider-only .react-colorful {
+  width: 100%;
+  height: auto;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--background);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+/* Hide the saturation panel */
+.hue-slider-only .react-colorful__saturation {
+  display: none;
+}
+
+/* Customize the hue slider */
+.hue-slider-only .react-colorful__hue {
+  height: 20px;
+  border-radius: 10px;
+  margin-bottom: 0;
+}
+
+/* Customize the hue slider pointer */
+.hue-slider-only .react-colorful__hue-pointer {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}

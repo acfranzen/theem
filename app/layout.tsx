@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang='en' className={manrope.className} suppressHydrationWarning>
-      <body className='min-h-[100dvh] bg-gray-50 dark:bg-gray-950 text-black dark:text-white'>
+      <body className='min-h-[100dvh] text-foreground bg-background'>
         <ThemeProvider>
           <UserProvider userPromise={userPromise}>{children}</UserProvider>
         </ThemeProvider>

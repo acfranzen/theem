@@ -5,7 +5,6 @@ import { Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
-import { ModeToggle } from '@/components/mode-toggle';
 import { useTheme } from 'next-themes';
 import React from 'react';
 import {
@@ -181,7 +180,6 @@ export default function ThemeCreator() {
               Copy Code
             </Button>
             <Button size='sm'>Generate Theme</Button>
-            <ModeToggle />
           </div>
         </div>
       </header>

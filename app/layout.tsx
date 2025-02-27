@@ -4,6 +4,8 @@ import { Manrope } from 'next/font/google';
 import { UserProvider } from '@/lib/auth';
 import { getUser } from '@/lib/db/queries';
 import { ThemeProvider } from '@/lib/providers/theme-provider';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/app-sidebar';
 
 export const metadata: Metadata = {
   title: 'Next.js SaaS Starter',
@@ -23,7 +25,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang='en' className={manrope.className} suppressHydrationWarning>
       <body className='min-h-[100dvh] text-foreground bg-background'>
         <ThemeProvider>
-          <UserProvider userPromise={userPromise}>{children}</UserProvider>
+          <UserProvider userPromise={userPromise}>
+            <SidebarProvider>
+              <AppSidebar />
+              <main>{children}</main>
+            </SidebarProvider>
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -136,29 +136,12 @@ export default function ThemeEditor({
                 </Button>
               </div>
             </div>
-
-            <Separator />
-
-            <div>
-              <h3 className='text-base font-medium mb-2'>Theme Description</h3>
-              <Textarea
-                className='mb-4 h-24 font-mono text-sm'
-                placeholder='Theme description...'
-                defaultValue='A theme inspired by modern design principles. Clean and professional with a touch of personality.'
-              />
-            </div>
           </div>
         )}
 
         {/* Advanced Mode UI */}
         {editorMode === 'advanced' && (
           <>
-            <Textarea
-              className='mb-4 h-24 font-mono text-sm'
-              placeholder='Theme description...'
-              defaultValue='A theme inspired by modern design principles. Clean and professional with a touch of personality.'
-            />
-
             <ScrollArea className='h-[calc(100vh-250px)]'>
               <div className='space-y-4 pr-4'>
                 {/* Color pickers */}

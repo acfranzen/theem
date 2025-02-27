@@ -4,9 +4,7 @@ import { ContentLayout } from '@/components/sidebar/shadcn/content-layout';
 export default function Home() {
   return (
     <main className='min-h-screen'>
-      <ContentLayout title='Theme Creator'>
-        <ThemeCreator />
-      </ContentLayout>
+      <ThemeCreator />
     </main>
   );
 }

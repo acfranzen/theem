@@ -13,7 +13,6 @@ export function Navbar({ title, flags }: NavbarProps) {
       <div className='mx-4 sm:mx-8 flex h-14 items-center'>
         <SidebarTrigger />
         <div className='flex items-center space-x-4 lg:space-x-0'>
-          <SheetMenu flags={flags} />
           <h1 className='font-bold text-foreground'>{title}</h1>
         </div>
         <div className='flex flex-1 items-center space-x-2 justify-end'>

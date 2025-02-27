@@ -27,6 +27,7 @@ import ThemePreview from '@/components/picker/theme-preview';
 import ThemeImportModal from '@/components/picker/theme-import-modal';
 import { defaultTheme } from './defaultTheme';
 import { ModeToggle } from '../mode-toggle';
+import { SidebarTrigger } from '../ui/sidebar';
 
 // Type for theme color key
 type ThemeColorKey = keyof typeof defaultTheme.light;
@@ -220,9 +221,12 @@ export default function ThemeCreator() {
       // Use inline styles for theme preview to avoid re-renders
       style={getThemePreviewStyles(themeColorsRef.current, activeMode)}
     >
-      <header className='border-b'>
-        <div className='container flex items-center justify-between h-16 px-4'>
-          <h1 className='text-2xl font-bold'>ShadCN Theme Creator</h1>
+      <header className='sticky top-0 z-[15] w-full bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/5 dark:shadow-secondary border-b'>
+        <div className='container h-14 flex items-center justify-between px-4 sm:px-8'>
+          <div className='flex items-center space-x-4 lg:space-x-0'>
+            <SidebarTrigger />
+            <h1 className='font-bold text-foreground'>ShadCN Theme Creator</h1>
+          </div>
           <div className='flex items-center gap-4'>
             <ModeToggle onClick={() => handleThemeToggle()} />
             <Button onClick={copyToClipboard} variant='outline' size='sm'>
@@ -236,7 +240,7 @@ export default function ThemeCreator() {
         </div>
       </header>
 
-      <div className='flex flex-col md:flex-row flex-1'>
+      <div className='flex flex-col md:flex-row flex-1 px-4'>
         {/* Theme Editor Component - avoid remounting with key changes */}
         <ThemeEditor
           themeColors={themeColorsRef.current}

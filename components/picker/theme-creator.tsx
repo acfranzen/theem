@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
@@ -30,6 +30,17 @@ import { ModeToggle } from '../mode-toggle';
 import { SidebarTrigger } from '../ui/sidebar';
 import { ScrollArea } from '../ui/scroll-area';
 import { FontOption, applyFontToDocument, fontOptions } from '@/lib/picker/font-utils';
+import { saveTheme, getUserThemesList, ThemeData } from '@/lib/services/theme-service';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 // Type for theme color key
 type ThemeColorKey = keyof typeof defaultTheme.light;
@@ -53,6 +64,32 @@ export default function ThemeCreator() {
   const [forceEditorUpdate, setForceEditorUpdate] = useState(0);
   const [importModalOpen, setImportModalOpen] = useState(false);
 
+  // Add state for saving to database
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [themeName, setThemeName] = useState('My Custom Theme');
+  const [isDefault, setIsDefault] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isThemeSaved, setIsThemeSaved] = useState(false);
+
+  // Check if theme is already saved
+  const checkIfThemeIsSaved = useCallback(async () => {
+    try {
+      const userThemes = await getUserThemesList();
+      // Compare current theme with saved themes
+      // This is a simple check - you might want a more sophisticated comparison
+      const themeFound = userThemes.some(
+        savedTheme =>
+          JSON.stringify(savedTheme.light) === JSON.stringify(themeColorsRef.current.light) &&
+          JSON.stringify(savedTheme.dark) === JSON.stringify(themeColorsRef.current.dark)
+      );
+      setIsThemeSaved(themeFound);
+      return themeFound;
+    } catch (error) {
+      console.error('Error checking if theme is saved:', error);
+      return false;
+    }
+  }, []);
+
   // Handle hydration mismatch
   useEffect(() => {
     setMounted(true);
@@ -75,7 +112,21 @@ export default function ThemeCreator() {
     if (defaultFont) {
       applyFontToDocument(defaultFont);
     }
-  }, [mounted, currentTheme, currentFont]);
+
+    // Check if theme is already saved
+    checkIfThemeIsSaved();
+  }, [mounted, currentTheme, currentFont, checkIfThemeIsSaved]);
+
+  // Check if theme is saved when it changes significantly
+  useEffect(() => {
+    if (!mounted) return;
+    // Debounce the check to avoid too many API calls
+    const timer = setTimeout(() => {
+      checkIfThemeIsSaved();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [forceEditorUpdate, checkIfThemeIsSaved, mounted]);
 
   // Update all hues with new value without re-rendering
   const handleHueChange = useCallback(
@@ -224,6 +275,41 @@ export default function ThemeCreator() {
     // Font will be applied by the FontSelector component through the FontProvider
   }, []);
 
+  // Handle save to database
+  const handleSaveToDatabase = useCallback(async () => {
+    try {
+      // First check if theme is already saved
+      const alreadySaved = await checkIfThemeIsSaved();
+      if (alreadySaved) {
+        toast('This theme is already saved in your account');
+        return;
+      }
+
+      setIsSaving(true);
+
+      const themeData: ThemeData = {
+        name: themeName,
+        isDefault: isDefault,
+        light: themeColorsRef.current.light,
+        dark: themeColorsRef.current.dark,
+      };
+
+      await saveTheme(themeData);
+
+      // Close the dialog
+      setSaveDialogOpen(false);
+      setIsThemeSaved(true);
+
+      // Show success message
+      toast('Theme saved successfully');
+    } catch (error) {
+      console.error('Error saving theme:', error);
+      toast.error('Failed to save theme');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [themeName, isDefault, checkIfThemeIsSaved]);
+
   // Handle selecting a default theme
   const handleSelectDefaultTheme = useCallback(
     (themeName: string, theme: any) => {
@@ -296,6 +382,15 @@ export default function ThemeCreator() {
             <Button onClick={() => setImportModalOpen(true)} size='sm'>
               Import Theme
             </Button>
+            <Button
+              onClick={() => setSaveDialogOpen(true)}
+              variant='default'
+              size='sm'
+              disabled={isThemeSaved}
+            >
+              <Save className='w-4 h-4 mr-2' />
+              {isThemeSaved ? 'Theme Saved' : 'Save Theme'}
+            </Button>
           </div>
         </div>
       </header>
@@ -329,6 +424,48 @@ export default function ThemeCreator() {
         onOpenChange={setImportModalOpen}
         onImport={handleImportTheme}
       />
+
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Theme</DialogTitle>
+            <DialogDescription>Save your current theme to your account</DialogDescription>
+          </DialogHeader>
+
+          <div className='space-y-4 py-2'>
+            <div className='space-y-2'>
+              <Label htmlFor='db-theme-name'>Theme Name</Label>
+              <Input
+                id='db-theme-name'
+                value={themeName}
+                onChange={e => setThemeName(e.target.value)}
+                placeholder='My Custom Theme'
+              />
+            </div>
+
+            <div className='flex items-center space-x-2'>
+              <input
+                type='checkbox'
+                id='db-is-default'
+                checked={isDefault}
+                onChange={e => setIsDefault(e.target.checked)}
+                className='h-4 w-4 rounded border-gray-300'
+              />
+              <Label htmlFor='db-is-default'>Set as default theme</Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setSaveDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveToDatabase} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save Theme'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Toaster />
     </div>
   );

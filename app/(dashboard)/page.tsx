@@ -58,10 +58,10 @@ export default function LandingPage() {
     <div className='min-h-screen bg-background text-foreground transition-colors duration-300'>
       <Navbar theme={theme || 'light'} toggleTheme={toggleTheme} />
       <Hero colorScheme={colorScheme} scrollY={scrollY} handleColorChange={handleColorChange} />
-      <Features />
-      <HowItWorks />
-      <Pricing />
-      <Testimonials />
+      <Features colorScheme={colorScheme} />
+      <HowItWorks colorScheme={colorScheme} />
+      <Pricing colorScheme={colorScheme} />
+      <Testimonials colorScheme={colorScheme} />
       <CTA colorScheme={colorScheme} />
       <Footer colorScheme={colorScheme} />
     </div>

@@ -5,6 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { colorThemes } from './colorThemes';
 import Link from 'next/link';
+import { DotPattern } from '@/components/magicui/dot-pattern';
 
 export default function Hero({
   colorScheme,
@@ -17,12 +18,19 @@ export default function Hero({
 }) {
   return (
     <section className='relative overflow-hidden py-20 sm:py-32'>
-      <div
-        className={`absolute inset-0 bg-grid-pattern opacity-[0.02] dark:opacity-[0.05] bg-gradient-to-br ${colorThemes[colorScheme].gradient}`}
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fillRule='evenodd'%3E%3Cg fill='%239C92AC' fillOpacity='0.4'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}
-      />
+      <div className='absolute inset-0 -right-128'>
+        <DotPattern
+          className={`opacity-90 dark:opacity-80 [mask-image:radial-gradient(600px_circle_at_center,white,transparent)]`}
+          width={20}
+          height={20}
+          cr={1.5}
+          glow={true}
+          style={{
+            color: `hsl(${colorThemes[colorScheme].primary})`,
+          }}
+          initial={{ opacity: 1, scale: 1 }}
+        />
+      </div>
 
       <div className='container mx-auto px-4 sm:px-6 lg:px-8 relative'>
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-12 items-center'>

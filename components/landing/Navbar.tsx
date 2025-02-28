@@ -35,7 +35,7 @@ export default function Navbar({
             transition={{ duration: 0.5, delay: 0.2 }}
             className='flex items-center space-x-4'
           >
-            <Link href='#features' className='text-sm hover:text-primary transition-colors'>
+            {/* <Link href='#features' className='text-sm hover:text-primary transition-colors'>
               Features
             </Link>
             <Link href='#how-it-works' className='text-sm hover:text-primary transition-colors'>
@@ -43,11 +43,11 @@ export default function Navbar({
             </Link>
             <Link href='#pricing' className='text-sm hover:text-primary transition-colors'>
               Pricing
-            </Link>
+            </Link> */}
             <Button size='sm' variant='outline' onClick={toggleTheme}>
               {theme === 'dark' ? '☀️' : '🌙'}
             </Button>
-            <Button size='sm'>Get Started</Button>
+            {/* <Button size='sm'>Get Started</Button> */}
           </motion.div>
         </div>
       </div>

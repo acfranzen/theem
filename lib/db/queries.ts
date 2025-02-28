@@ -1,6 +1,6 @@
 import { desc, and, eq, isNull } from 'drizzle-orm';
 import { db } from './drizzle';
-import { activityLogs, teamMembers, teams, users } from './schema';
+import { activityLogs, teamMembers, teams, themes, users } from './schema';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/session';
 
@@ -122,4 +122,97 @@ export async function getTeamForUser(userId: number) {
   });
 
   return result?.teamMembers[0]?.team || null;
+}
+
+// Theme related queries
+export async function getUserThemes(userId: number) {
+  return await db
+    .select()
+    .from(themes)
+    .where(eq(themes.userId, userId))
+    .orderBy(desc(themes.updatedAt));
+}
+
+export async function getUserDefaultTheme(userId: number) {
+  const result = await db
+    .select()
+    .from(themes)
+    .where(and(eq(themes.userId, userId), eq(themes.isDefault, true)))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function saveUserTheme(
+  userId: number,
+  themeName: string,
+  lightTheme: any,
+  darkTheme: any,
+  isDefault: boolean = false
+) {
+  // If this theme is set as default, update any existing default themes
+  if (isDefault) {
+    await db
+      .update(themes)
+      .set({ isDefault: false })
+      .where(and(eq(themes.userId, userId), eq(themes.isDefault, true)));
+  }
+
+  return await db
+    .insert(themes)
+    .values({
+      userId,
+      name: themeName,
+      lightTheme,
+      darkTheme,
+      isDefault,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .returning();
+}
+
+export async function updateUserTheme(
+  themeId: number,
+  userId: number,
+  updates: {
+    name?: string;
+    lightTheme?: any;
+    darkTheme?: any;
+    isDefault?: boolean;
+  }
+) {
+  // If this theme is set as default, update any existing default themes
+  if (updates.isDefault) {
+    await db
+      .update(themes)
+      .set({ isDefault: false })
+      .where(and(eq(themes.userId, userId), eq(themes.isDefault, true)));
+  }
+
+  return await db
+    .update(themes)
+    .set({
+      ...updates,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(themes.id, themeId), eq(themes.userId, userId)))
+    .returning();
+}
+
+export async function deleteUserTheme(themeId: number, userId: number) {
+  const themeToDelete = await db
+    .select()
+    .from(themes)
+    .where(and(eq(themes.id, themeId), eq(themes.userId, userId)))
+    .limit(1);
+
+  if (themeToDelete.length === 0) {
+    return null;
+  }
+
+  // Delete the theme
+  await db.delete(themes).where(and(eq(themes.id, themeId), eq(themes.userId, userId)));
+
+  return themeToDelete[0];
 }

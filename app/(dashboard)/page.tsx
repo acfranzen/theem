@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
 import Navbar from '@/components/landing/Navbar';
 import Hero from '@/components/landing/Hero';
@@ -10,6 +10,7 @@ import Pricing from '@/components/landing/Pricing';
 import Testimonials from '@/components/landing/Testimonials';
 import CTA from '@/components/landing/CTA';
 import Footer from '@/components/landing/Footer';
+import FloatingColorPicker from '@/components/landing/FloatingColorPicker';
 import { colorThemes } from '@/components/landing/colorThemes';
 
 export default function LandingPage() {
@@ -17,11 +18,19 @@ export default function LandingPage() {
   const { theme, setTheme } = useTheme();
   const [colorScheme, setColorScheme] = useState<keyof typeof colorThemes>('purple');
   const [scrollY, setScrollY] = useState(0);
+  const [showFloatingPicker, setShowFloatingPicker] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
 
-  // Handle scroll for parallax effects
+  // Handle scroll for parallax effects and floating picker visibility
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
+
+      // Show floating picker when hero section is not fully visible
+      if (heroRef.current) {
+        const heroBottom = heroRef.current.offsetTop + heroRef.current.offsetHeight;
+        setShowFloatingPicker(window.scrollY > heroBottom - 200); // Show a bit before fully scrolled past
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -57,13 +66,21 @@ export default function LandingPage() {
   return (
     <div className='min-h-screen bg-background text-foreground transition-colors duration-300'>
       <Navbar theme={theme || 'light'} toggleTheme={toggleTheme} />
-      <Hero colorScheme={colorScheme} scrollY={scrollY} handleColorChange={handleColorChange} />
-      <Features colorScheme={colorScheme} />
+      <div ref={heroRef}>
+        <Hero colorScheme={colorScheme} scrollY={scrollY} handleColorChange={handleColorChange} />
+      </div>
+      {/* <Features colorScheme={colorScheme} />
       <HowItWorks colorScheme={colorScheme} />
       <Pricing colorScheme={colorScheme} />
       <Testimonials colorScheme={colorScheme} />
       <CTA colorScheme={colorScheme} />
       <Footer colorScheme={colorScheme} />
+
+      <FloatingColorPicker
+        colorScheme={colorScheme}
+        handleColorChange={handleColorChange}
+        isVisible={showFloatingPicker}
+      /> */}
     </div>
   );
 }

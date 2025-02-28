@@ -56,7 +56,7 @@ export default function Testimonials({ colorScheme }: { colorScheme: keyof typeo
             <span
               className={`bg-clip-text text-transparent bg-gradient-to-r ${colorThemes[colorScheme].gradient}`}
             >
-              indie hackers
+              builders
             </span>
           </h2>
           <p className='text-lg text-muted-foreground'>

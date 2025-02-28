@@ -20,8 +20,8 @@ export default function CTA({ colorScheme }: { colorScheme: keyof typeof colorTh
             Ready to create beautiful themes?
           </h2>
           <p className='text-lg text-white/80 mb-8 max-w-2xl mx-auto'>
-            Join thousands of indie hackers who are creating stunning themes with Theem. Start for
-            free, no credit card required.
+            Join thousands of builders who are creating stunning themes with Theem. Start for free,
+            no credit card required.
           </p>
           <div className='flex flex-col sm:flex-row gap-4 justify-center'>
             <Button size='lg' className='group bg-white text-primary hover:bg-white/90'>

@@ -58,8 +58,8 @@ export default function Features({ colorScheme }: { colorScheme: keyof typeof co
             </span>
           </h2>
           <p className='text-lg text-muted-foreground'>
-            Built by an indie hacker for indie hackers. Theem gives you all the tools you need
-            without the complexity.
+            Built by an indie hacker for builders. Theem gives you all the tools you need without
+            the complexity.
           </p>
         </motion.div>
 

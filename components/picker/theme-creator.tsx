@@ -255,7 +255,7 @@ export default function ThemeCreator() {
         </div>
       </header>
 
-      <div className='flex flex-col md:flex-row flex-1 px-4'>
+      <div className='flex flex-col md:flex-row flex-1 px-4 bg-card'>
         {/* Theme Editor Component - avoid remounting with key changes */}
         <ThemeEditor
           themeColors={themeColorsRef.current}
@@ -273,7 +273,7 @@ export default function ThemeCreator() {
         />
 
         {/* Theme Preview Component */}
-        <ScrollArea className='w-full h-[calc(100vh-3.5rem-2rem)]'>
+        <ScrollArea className='w-full h-[calc(100vh-3.5rem-2rem)] bg-background'>
           <ThemePreview />
         </ScrollArea>
       </div>

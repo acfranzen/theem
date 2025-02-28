@@ -21,8 +21,8 @@ export const defaultTheme = {
     ring: '295 35.8% 41.6%',
     radius: '0.5rem',
     // Sidebar-specific theming variables
-    'sidebar-background': '295 29.4% 98%',
-    'sidebar-foreground': '295 37.9% 31.6%',
+    'sidebar-background': '295 29% 47%',
+    'sidebar-foreground': '295 100% 98%',
     'sidebar-primary': '295 37.9% 31.6%',
     'sidebar-primary-foreground': '295 0% 100%',
     'sidebar-accent': '295 38.2% 89.2%',

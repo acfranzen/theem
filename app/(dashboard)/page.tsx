@@ -1,111 +1,802 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Palette, Sparkles, Code, Zap, ArrowRight, Check, Github, Twitter } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, CreditCard, Database } from 'lucide-react';
-import { Terminal } from './terminal';
 
-export default function HomePage() {
+// Define the type for color themes
+const colorThemes: Record<
+  string,
+  { primary: string; secondary: string; accent: string; gradient: string }
+> = {
+  purple: {
+    primary: '267 75% 60%',
+    secondary: '240 4.8% 95.9%',
+    accent: '240 4.8% 95.9%',
+    gradient: 'from-purple-500 to-pink-500',
+  },
+  blue: {
+    primary: '221 83% 53%',
+    secondary: '210 40% 96.1%',
+    accent: '210 40% 96.1%',
+    gradient: 'from-blue-500 to-cyan-500',
+  },
+  green: {
+    primary: '142 76% 36%',
+    secondary: '138 76% 97%',
+    accent: '138 76% 97%',
+    gradient: 'from-green-500 to-emerald-500',
+  },
+  orange: {
+    primary: '24 100% 50%',
+    secondary: '27 100% 95%',
+    accent: '27 100% 95%',
+    gradient: 'from-orange-500 to-yellow-500',
+  },
+  pink: {
+    primary: '330 81% 60%',
+    secondary: '329 100% 94%',
+    accent: '329 100% 94%',
+    gradient: 'from-pink-500 to-rose-500',
+  },
+  gray: {
+    primary: '220 14% 40%',
+    secondary: '220 13% 91%',
+    accent: '220 13% 91%',
+    gradient: 'from-gray-500 to-slate-500',
+  },
+};
+
+export default function LandingPage() {
+  const [theme, setTheme] = useState('light');
+  const [colorScheme, setColorScheme] = useState<keyof typeof colorThemes>('purple');
+  const [scrollY, setScrollY] = useState(0);
+
+  // Handle scroll for parallax effects
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Update CSS variables when color scheme changes
+  useEffect(() => {
+    const root = document.documentElement;
+    Object.entries(colorThemes[colorScheme]).forEach(([key, value]) => {
+      if (key === 'gradient') {
+        const [from, to] = value.split(' ');
+        root.style.setProperty('--gradient-from', from.replace('from-', ''));
+        root.style.setProperty('--gradient-to', to.replace('to-', ''));
+      } else {
+        root.style.setProperty(`--${key}`, value);
+      }
+    });
+  }, [colorScheme]);
+
+  // Theme toggle demo
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
+  // Color scheme change handler
+  const handleColorChange = (color: keyof typeof colorThemes) => {
+    setColorScheme(color);
+  };
+
   return (
-    <main>
-      <section className='py-20'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='lg:grid lg:grid-cols-12 lg:gap-8'>
-            <div className='sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left'>
-              <h1 className='text-4xl font-bold text-gray-900 tracking-tight sm:text-5xl md:text-6xl'>
-                Build Your SaaS
-                <span className='block text-orange-500'>Faster Than Ever</span>
-              </h1>
-              <p className='mt-3 text-base text-gray-500 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl'>
-                Launch your SaaS product in record time with our powerful, ready-to-use template.
-                Packed with modern technologies and essential integrations.
-              </p>
-              <div className='mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0'>
-                <a href='https://vercel.com/templates/next.js/next-js-saas-starter' target='_blank'>
-                  <Button className='bg-white hover:bg-gray-100 text-black border border-gray-200 rounded-full text-lg px-8 py-4 inline-flex items-center justify-center'>
-                    Deploy your own
-                    <ArrowRight className='ml-2 h-5 w-5' />
-                  </Button>
-                </a>
-              </div>
-            </div>
-            <div className='mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center'>
-              <Terminal />
-            </div>
-          </div>
-        </div>
-      </section>
+    <div className={theme === 'dark' ? 'dark' : ''}>
+      <div className='min-h-screen bg-background text-foreground transition-colors duration-300'>
+        {/* Navbar */}
+        <nav className='sticky top-0 z-50 backdrop-blur-md bg-background/80 border-b'>
+          <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
+            <div className='flex justify-between items-center h-16'>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+                className='flex items-center'
+              >
+                <span
+                  className={`text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${colorThemes[colorScheme].gradient}`}
+                >
+                  Theem
+                </span>
+              </motion.div>
 
-      <section className='py-16 bg-white w-full'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='lg:grid lg:grid-cols-3 lg:gap-8'>
-            <div>
-              <div className='flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 text-white'>
-                <svg viewBox='0 0 24 24' className='h-6 w-6'>
-                  <path
-                    fill='currentColor'
-                    d='M14.23 12.004a2.236 2.236 0 0 1-2.235 2.236 2.236 2.236 0 0 1-2.236-2.236 2.236 2.236 0 0 1 2.235-2.236 2.236 2.236 0 0 1 2.236 2.236zm2.648-10.69c-1.346 0-3.107.96-4.888 2.622-1.78-1.653-3.542-2.602-4.887-2.602-.41 0-.783.093-1.106.278-1.375.793-1.683 3.264-.973 6.365C1.98 8.917 0 10.42 0 12.004c0 1.59 1.99 3.097 5.043 4.03-.704 3.113-.39 5.588.988 6.38.32.187.69.275 1.102.275 1.345 0 3.107-.96 4.888-2.624 1.78 1.654 3.542 2.603 4.887 2.603.41 0 .783-.09 1.106-.275 1.374-.792 1.683-3.263.973-6.365C22.02 15.096 24 13.59 24 12.004c0-1.59-1.99-3.097-5.043-4.032.704-3.11.39-5.587-.988-6.38-.318-.184-.688-.277-1.092-.278zm-.005 1.09v.006c.225 0 .406.044.558.127.666.382.955 1.835.73 3.704-.054.46-.142.945-.25 1.44-.96-.236-2.006-.417-3.107-.534-.66-.905-1.345-1.727-2.035-2.447 1.592-1.48 3.087-2.292 4.105-2.295zm-9.77.02c1.012 0 2.514.808 4.11 2.28-.686.72-1.37 1.537-2.02 2.442-1.107.117-2.154.298-3.113.538-.112-.49-.195-.964-.254-1.42-.23-1.868.054-3.32.714-3.707.19-.09.4-.127.563-.132zm4.882 3.05c.455.468.91.992 1.36 1.564-.44-.02-.89-.034-1.345-.034-.46 0-.915.01-1.36.034.44-.572.895-1.096 1.345-1.565zM12 8.1c.74 0 1.477.034 2.202.093.406.582.802 1.203 1.183 1.86.372.64.71 1.29 1.018 1.946-.308.655-.646 1.31-1.013 1.95-.38.66-.773 1.288-1.18 1.87-.728.063-1.466.098-2.21.098-.74 0-1.477-.035-2.202-.093-.406-.582-.802-1.204-1.183-1.86-.372-.64-.71-1.29-1.018-1.946.303-.657.646-1.313 1.013-1.954.38-.66.773-1.286 1.18-1.868.728-.064 1.466-.098 2.21-.098zm-3.635.254c-.24.377-.48.763-.704 1.16-.225.39-.435.782-.635 1.174-.265-.656-.49-1.31-.676-1.947.64-.15 1.315-.283 2.015-.386zm7.26 0c.695.103 1.365.23 2.006.387-.18.632-.405 1.282-.66 1.933-.2-.39-.41-.783-.64-1.174-.225-.392-.465-.774-.705-1.146zm3.063.675c.484.15.944.317 1.375.498 1.732.74 2.852 1.708 2.852 2.476-.005.768-1.125 1.74-2.857 2.475-.42.18-.88.342-1.355.493-.28-.958-.646-1.956-1.1-2.98.45-1.017.81-2.01 1.085-2.964zm-13.395.004c.278.96.645 1.957 1.1 2.98-.45 1.017-.812 2.01-1.086 2.964-.484-.15-.944-.318-1.37-.5-1.732-.737-2.852-1.706-2.852-2.474 0-.768 1.12-1.742 2.852-2.476.42-.18.88-.342 1.356-.494zm11.678 4.28c.265.657.49 1.312.676 1.948-.64.157-1.316.29-2.016.39.24-.375.48-.762.705-1.158.225-.39.435-.788.636-1.18zm-9.945.02c.2.392.41.783.64 1.175.23.39.465.772.705 1.143-.695-.102-1.365-.23-2.006-.386.18-.63.406-1.282.66-1.933zM17.92 16.32c.112.493.2.968.254 1.423.23 1.868-.054 3.32-.714 3.708-.147.09-.338.128-.563.128-1.012 0-2.514-.807-4.11-2.28.686-.72 1.37-1.536 2.02-2.44 1.107-.118 2.154-.3 3.113-.54zm-11.83.01c.96.234 2.006.415 3.107.532.66.905 1.345 1.727 2.035 2.446-1.595 1.483-3.092 2.295-4.11 2.295-.22-.005-.406-.05-.553-.132-.666-.38-.955-1.834-.73-3.703.054-.46.142-.944.25-1.438zm4.56.64c.44.02.89.034 1.345.034.46 0 .915-.01 1.36-.034-.44.572-.895 1.095-1.345 1.565-.455-.47-.91-.993-1.36-1.565z'
-                  />
-                </svg>
-              </div>
-              <div className='mt-5'>
-                <h2 className='text-lg font-medium text-gray-900'>Next.js and React</h2>
-                <p className='mt-2 text-base text-gray-500'>
-                  Leverage the power of modern web technologies for optimal performance and
-                  developer experience.
-                </p>
-              </div>
-            </div>
-
-            <div className='mt-10 lg:mt-0'>
-              <div className='flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 text-white'>
-                <Database className='h-6 w-6' />
-              </div>
-              <div className='mt-5'>
-                <h2 className='text-lg font-medium text-gray-900'>Postgres and Drizzle ORM</h2>
-                <p className='mt-2 text-base text-gray-500'>
-                  Robust database solution with an intuitive ORM for efficient data management and
-                  scalability.
-                </p>
-              </div>
-            </div>
-
-            <div className='mt-10 lg:mt-0'>
-              <div className='flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 text-white'>
-                <CreditCard className='h-6 w-6' />
-              </div>
-              <div className='mt-5'>
-                <h2 className='text-lg font-medium text-gray-900'>Stripe Integration</h2>
-                <p className='mt-2 text-base text-gray-500'>
-                  Seamless payment processing and subscription management with industry-leading
-                  Stripe integration.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className='py-16 bg-gray-50'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center'>
-            <div>
-              <h2 className='text-3xl font-bold text-gray-900 sm:text-4xl'>
-                Ready to launch your SaaS?
-              </h2>
-              <p className='mt-3 max-w-3xl text-lg text-gray-500'>
-                Our template provides everything you need to get your SaaS up and running quickly.
-                Don't waste time on boilerplate - focus on what makes your product unique.
-              </p>
-            </div>
-            <div className='mt-8 lg:mt-0 flex justify-center lg:justify-end'>
-              <a href='https://github.com/nextjs/saas-starter' target='_blank'>
-                <Button className='bg-white hover:bg-gray-100 text-black border border-gray-200 rounded-full text-xl px-12 py-6 inline-flex items-center justify-center'>
-                  View the code
-                  <ArrowRight className='ml-3 h-6 w-6' />
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className='flex items-center space-x-4'
+              >
+                <Link href='#features' className='text-sm hover:text-primary transition-colors'>
+                  Features
+                </Link>
+                <Link href='#how-it-works' className='text-sm hover:text-primary transition-colors'>
+                  How it works
+                </Link>
+                <Link href='#pricing' className='text-sm hover:text-primary transition-colors'>
+                  Pricing
+                </Link>
+                <Button size='sm' variant='outline' onClick={toggleTheme}>
+                  {theme === 'light' ? '🌙' : '☀️'}
                 </Button>
-              </a>
+                <Button size='sm'>Get Started</Button>
+              </motion.div>
             </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </nav>
+
+        {/* Hero Section */}
+        <section className='relative overflow-hidden py-20 sm:py-32'>
+          <div
+            className={`absolute inset-0 bg-grid-pattern opacity-[0.02] dark:opacity-[0.05] bg-gradient-to-br ${colorThemes[colorScheme].gradient}`}
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fillRule='evenodd'%3E%3Cg fill='%239C92AC' fillOpacity='0.4'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+
+          <div className='container mx-auto px-4 sm:px-6 lg:px-8 relative'>
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-12 items-center'>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7 }}
+                className='space-y-6'
+              >
+                <div
+                  className={`inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium`}
+                >
+                  ✨ Finally, theme creation made simple
+                </div>
+                <h1 className='text-4xl sm:text-5xl md:text-6xl font-bold leading-tight'>
+                  Create beautiful themes{' '}
+                  <span
+                    className={`bg-clip-text text-transparent bg-gradient-to-r ${colorThemes[colorScheme].gradient}`}
+                  >
+                    without the hassle
+                  </span>
+                </h1>
+                <p className='text-lg text-muted-foreground max-w-lg'>
+                  Theem helps indie hackers and developers create, customize, and export beautiful
+                  themes for their applications in minutes, not hours.
+                </p>
+                <div className='flex flex-col sm:flex-row gap-4'>
+                  <Button size='lg' className='group'>
+                    Get Started Free
+                    <ArrowRight className='ml-2 h-4 w-4 transition-transform group-hover:translate-x-1' />
+                  </Button>
+                  <Button size='lg' variant='outline'>
+                    See Examples
+                  </Button>
+                </div>
+                <p className='text-sm text-muted-foreground'>
+                  No credit card required. Free plan available.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.7, delay: 0.3 }}
+                style={{
+                  y: scrollY * 0.1,
+                  rotate: scrollY * 0.02,
+                }}
+                className='relative'
+              >
+                <div className='relative mx-auto w-full max-w-md'>
+                  <div
+                    className={`aspect-[4/3] rounded-xl bg-gradient-to-br ${colorThemes[colorScheme].gradient} p-1`}
+                  >
+                    <div className='h-full w-full rounded-lg bg-background p-4 shadow-xl'>
+                      <div className='flex items-center justify-between mb-4'>
+                        <div className='flex space-x-2'>
+                          <div className='h-3 w-3 rounded-full bg-red-500'></div>
+                          <div className='h-3 w-3 rounded-full bg-yellow-500'></div>
+                          <div className='h-3 w-3 rounded-full bg-green-500'></div>
+                        </div>
+                        <div className='text-xs text-muted-foreground'>Theme Editor</div>
+                      </div>
+
+                      <div className='grid grid-cols-2 gap-4'>
+                        <div className='space-y-2'>
+                          <div className='h-4 w-24 rounded bg-primary/20'></div>
+                          <div className='h-8 w-full rounded bg-primary/10'></div>
+                          <div className='h-8 w-full rounded bg-primary/10'></div>
+                          <div className='h-8 w-full rounded bg-primary/10'></div>
+                        </div>
+                        <div className='space-y-2'>
+                          <div className='h-4 w-20 rounded bg-primary/20'></div>
+                          <div className='grid grid-cols-3 gap-2'>
+                            {Object.keys(colorThemes).map(color => (
+                              <button
+                                key={color}
+                                className={`h-12 w-full rounded transition-transform duration-200 ease-in-out ${
+                                  colorScheme === color
+                                    ? 'ring-2 ring-offset-2 ring-primary scale-110'
+                                    : ''
+                                }`}
+                                style={{ backgroundColor: `hsl(${colorThemes[color].primary})` }}
+                                onClick={() => handleColorChange(color)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className='mt-4 space-y-2'>
+                        <div className='h-4 w-32 rounded bg-primary/20'></div>
+                        <div className='flex space-x-2'>
+                          <div className='h-8 w-16 rounded bg-primary'></div>
+                          <div className='h-8 w-16 rounded bg-muted'></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`absolute -bottom-6 -right-6 h-24 w-24 rounded-lg bg-gradient-to-br ${colorThemes[colorScheme].gradient} p-1 shadow-lg transform rotate-6`}
+                  >
+                    <div className='h-full w-full rounded bg-background p-2'>
+                      <div className='h-4 w-12 rounded bg-primary/20 mb-2'></div>
+                      <div className='grid grid-cols-2 gap-1'>
+                        <div className='h-6 w-full rounded bg-purple-500/30'></div>
+                        <div className='h-6 w-full rounded bg-pink-500/30'></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.6 }}
+              className='mt-20 flex flex-wrap justify-center gap-x-12 gap-y-6 grayscale opacity-70'
+            >
+              <div className='flex items-center'>
+                <span className='text-xl font-semibold'>Used by indie hackers at</span>
+              </div>
+              <div className='h-8 w-24 bg-foreground/80 rounded'></div>
+              <div className='h-8 w-32 bg-foreground/80 rounded'></div>
+              <div className='h-8 w-28 bg-foreground/80 rounded'></div>
+              <div className='h-8 w-20 bg-foreground/80 rounded'></div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section id='features' className='py-20 sm:py-32'>
+          <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className='text-center max-w-3xl mx-auto mb-16'
+            >
+              <h2 className='text-3xl sm:text-4xl font-bold mb-4'>
+                Everything you need to create perfect themes
+              </h2>
+              <p className='text-lg text-muted-foreground'>
+                Built by an indie hacker for indie hackers. Theem gives you all the tools you need
+                without the complexity.
+              </p>
+            </motion.div>
+
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
+              {[
+                {
+                  icon: <Palette className='h-6 w-6' />,
+                  title: 'Visual Editor',
+                  description:
+                    'Drag and drop interface to create themes without writing a single line of code.',
+                },
+                {
+                  icon: <Code className='h-6 w-6' />,
+                  title: 'Export to Any Framework',
+                  description:
+                    'Export your theme to CSS, Tailwind, CSS-in-JS, or any other framework you use.',
+                },
+                {
+                  icon: <Sparkles className='h-6 w-6' />,
+                  title: 'AI Color Suggestions',
+                  description:
+                    'Get intelligent color palette suggestions based on your brand colors.',
+                },
+                {
+                  icon: <Zap className='h-6 w-6' />,
+                  title: 'Instant Preview',
+                  description:
+                    'See your changes in real-time across different components and layouts.',
+                },
+                {
+                  icon: <Github className='h-6 w-6' />,
+                  title: 'Version Control',
+                  description: 'Save and track different versions of your themes as you iterate.',
+                },
+                {
+                  icon: <Twitter className='h-6 w-6' />,
+                  title: 'Theme Sharing',
+                  description:
+                    'Share your themes with the community or keep them private for your projects.',
+                },
+              ].map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className='relative group'
+                >
+                  <div className='absolute inset-0 bg-gradient-to-r from-[var(--gradient-from)]/10 to-[var(--gradient-to)]/10 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300'></div>
+                  <div className='relative bg-card hover:bg-card/80 transition-colors duration-300 p-6 rounded-xl border shadow-sm h-full'>
+                    <div className='p-3 bg-primary/10 rounded-lg w-fit mb-4 text-primary'>
+                      {feature.icon}
+                    </div>
+                    <h3 className='text-xl font-semibold mb-2'>{feature.title}</h3>
+                    <p className='text-muted-foreground'>{feature.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section id='how-it-works' className='py-20 sm:py-32 bg-muted/50'>
+          <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className='text-center max-w-3xl mx-auto mb-16'
+            >
+              <h2 className='text-3xl sm:text-4xl font-bold mb-4'>How Theem works</h2>
+              <p className='text-lg text-muted-foreground'>
+                Creating the perfect theme for your project has never been easier
+              </p>
+            </motion.div>
+
+            <div className='grid grid-cols-1 lg:grid-cols-3 gap-8 relative'>
+              <div className='absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-[var(--gradient-from)]/0 via-[var(--gradient-from)]/50 to-[var(--gradient-to)]/0 hidden lg:block'></div>
+
+              {[
+                {
+                  step: '01',
+                  title: 'Choose your base',
+                  description:
+                    'Start with a pre-built theme or create one from scratch with our visual editor.',
+                },
+                {
+                  step: '02',
+                  title: 'Customize everything',
+                  description:
+                    'Adjust colors, typography, spacing, and more with real-time preview.',
+                },
+                {
+                  step: '03',
+                  title: 'Export & implement',
+                  description:
+                    'Export your theme in your preferred format and implement it in your project.',
+                },
+              ].map((step, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.2 }}
+                  className='relative z-10'
+                >
+                  <div className='bg-background rounded-xl p-6 border shadow-sm h-full'>
+                    <div className='w-12 h-12 rounded-full bg-gradient-to-r from-[var(--gradient-from)] to-[var(--gradient-to)] flex items-center justify-center text-white font-bold mb-4'>
+                      {step.step}
+                    </div>
+                    <h3 className='text-xl font-semibold mb-2'>{step.title}</h3>
+                    <p className='text-muted-foreground'>{step.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.6 }}
+              className='mt-16 text-center'
+            >
+              <Button size='lg' className='group'>
+                Try It Now
+                <ArrowRight className='ml-2 h-4 w-4 transition-transform group-hover:translate-x-1' />
+              </Button>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section id='pricing' className='py-20 sm:py-32'>
+          <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className='text-center max-w-3xl mx-auto mb-16'
+            >
+              <h2 className='text-3xl sm:text-4xl font-bold mb-4'>Simple, transparent pricing</h2>
+              <p className='text-lg text-muted-foreground'>
+                Start for free, upgrade when you need more. No hidden fees.
+              </p>
+            </motion.div>
+
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
+              {[
+                {
+                  name: 'Hobby',
+                  price: 'Free',
+                  description: 'Perfect for side projects and experiments',
+                  features: ['3 themes', 'Basic editor', 'Export to CSS', 'Community support'],
+                  cta: 'Get Started',
+                  popular: false,
+                },
+                {
+                  name: 'Pro',
+                  price: '$12',
+                  period: '/month',
+                  description: 'Everything you need for serious projects',
+                  features: [
+                    'Unlimited themes',
+                    'Advanced editor',
+                    'Export to any format',
+                    'Version history',
+                    'Priority support',
+                    'AI color suggestions',
+                  ],
+                  cta: 'Get Started',
+                  popular: true,
+                },
+                {
+                  name: 'Team',
+                  price: '$49',
+                  period: '/month',
+                  description: 'Collaborate with your entire team',
+                  features: [
+                    'Everything in Pro',
+                    'Team collaboration',
+                    'Role-based permissions',
+                    'Theme library',
+                    'API access',
+                    'Dedicated support',
+                  ],
+                  cta: 'Contact Us',
+                  popular: false,
+                },
+              ].map((plan, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className={`relative ${plan.popular ? 'lg:-mt-4 lg:mb-4' : ''}`}
+                >
+                  {plan.popular && (
+                    <div className='absolute -top-4 left-0 right-0 flex justify-center'>
+                      <div className='bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded-full'>
+                        Most Popular
+                      </div>
+                    </div>
+                  )}
+
+                  <div
+                    className={`bg-card rounded-xl p-6 border shadow-sm h-full ${plan.popular ? 'border-primary/50 ring-1 ring-primary/20' : ''}`}
+                  >
+                    <h3 className='text-xl font-semibold mb-2'>{plan.name}</h3>
+                    <div className='mb-4'>
+                      <span className='text-3xl font-bold'>{plan.price}</span>
+                      {plan.period && <span className='text-muted-foreground'>{plan.period}</span>}
+                    </div>
+                    <p className='text-muted-foreground mb-6'>{plan.description}</p>
+
+                    <ul className='space-y-3 mb-8'>
+                      {plan.features.map((feature, i) => (
+                        <li key={i} className='flex items-center'>
+                          <Check className='h-5 w-5 text-primary mr-2 flex-shrink-0' />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button
+                      size='lg'
+                      className='w-full'
+                      variant={plan.popular ? 'default' : 'outline'}
+                    >
+                      {plan.cta}
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className='py-20 sm:py-32 bg-muted/50'>
+          <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className='text-center max-w-3xl mx-auto mb-16'
+            >
+              <h2 className='text-3xl sm:text-4xl font-bold mb-4'>Loved by indie hackers</h2>
+              <p className='text-lg text-muted-foreground'>
+                Don't just take our word for it. Here's what our users have to say.
+              </p>
+            </motion.div>
+
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
+              {[
+                {
+                  quote:
+                    'Theem saved me hours of work. I was able to create a beautiful theme for my SaaS in minutes.',
+                  author: 'Sarah K.',
+                  role: 'Indie Hacker',
+                },
+                {
+                  quote:
+                    "The AI color suggestions are mind-blowing. It's like having a designer on your team.",
+                  author: 'Mike T.',
+                  role: 'Frontend Developer',
+                },
+                {
+                  quote:
+                    "I've tried many theme creators, but Theem is by far the most intuitive and powerful.",
+                  author: 'Alex R.',
+                  role: 'Product Designer',
+                },
+                {
+                  quote:
+                    'Being able to export to any framework is a game-changer. Works perfectly with my Next.js projects.',
+                  author: 'Jamie L.',
+                  role: 'Full-stack Developer',
+                },
+                {
+                  quote:
+                    'The version control feature is brilliant. I can experiment without fear of losing my work.',
+                  author: 'Chris D.',
+                  role: 'UI Engineer',
+                },
+                {
+                  quote:
+                    'As a non-designer, Theem has been invaluable for creating professional-looking themes.',
+                  author: 'Pat M.',
+                  role: 'Solo Founder',
+                },
+              ].map((testimonial, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <div className='bg-background rounded-xl p-6 border shadow-sm h-full'>
+                    <div className='mb-4 text-primary'>{'★'.repeat(5)}</div>
+                    <p className='mb-4 italic'>"{testimonial.quote}"</p>
+                    <div>
+                      <p className='font-semibold'>{testimonial.author}</p>
+                      <p className='text-sm text-muted-foreground'>{testimonial.role}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className='py-20 sm:py-32'>
+          <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className={`bg-gradient-to-r ${colorThemes[colorScheme].gradient} rounded-2xl p-8 md:p-12 lg:p-16 text-center max-w-4xl mx-auto`}
+            >
+              <h2 className='text-3xl sm:text-4xl font-bold mb-4 text-white'>
+                Ready to create beautiful themes?
+              </h2>
+              <p className='text-lg text-white/80 mb-8 max-w-2xl mx-auto'>
+                Join thousands of indie hackers who are creating stunning themes with Theem. Start
+                for free, no credit card required.
+              </p>
+              <div className='flex flex-col sm:flex-row gap-4 justify-center'>
+                <Button size='lg' className='group bg-white text-primary hover:bg-white/90'>
+                  Get Started Free
+                  <ArrowRight className='ml-2 h-4 w-4 transition-transform group-hover:translate-x-1' />
+                </Button>
+                <Button
+                  size='lg'
+                  variant='outline'
+                  className='bg-transparent border-white text-white hover:bg-white/10'
+                >
+                  Schedule a Demo
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className='py-12 border-t'>
+          <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
+            <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8'>
+              <div className='col-span-2 lg:col-span-2'>
+                <div
+                  className={`text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${colorThemes[colorScheme].gradient} mb-4`}
+                >
+                  Theem
+                </div>
+                <p className='text-muted-foreground mb-4 max-w-xs'>
+                  Create beautiful themes for your applications without the hassle.
+                </p>
+                <div className='flex space-x-4'>
+                  <Link
+                    href='#'
+                    className='text-muted-foreground hover:text-foreground transition-colors'
+                  >
+                    <Twitter className='h-5 w-5' />
+                    <span className='sr-only'>Twitter</span>
+                  </Link>
+                  <Link
+                    href='#'
+                    className='text-muted-foreground hover:text-foreground transition-colors'
+                  >
+                    <Github className='h-5 w-5' />
+                    <span className='sr-only'>GitHub</span>
+                  </Link>
+                </div>
+              </div>
+
+              <div>
+                <h3 className='font-semibold mb-4'>Product</h3>
+                <ul className='space-y-2'>
+                  <li>
+                    <Link
+                      href='#'
+                      className='text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                      Features
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href='#'
+                      className='text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                      Pricing
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href='#'
+                      className='text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                      Roadmap
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href='#'
+                      className='text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                      Changelog
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className='font-semibold mb-4'>Resources</h3>
+                <ul className='space-y-2'>
+                  <li>
+                    <Link
+                      href='#'
+                      className='text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                      Documentation
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href='#'
+                      className='text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                      Tutorials
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href='#'
+                      className='text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                      Blog
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href='#'
+                      className='text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                      Support
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className='font-semibold mb-4'>Company</h3>
+                <ul className='space-y-2'>
+                  <li>
+                    <Link
+                      href='#'
+                      className='text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                      About
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href='#'
+                      className='text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                      Careers
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href='#'
+                      className='text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                      Privacy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href='#'
+                      className='text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                      Terms
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className='mt-12 pt-8 border-t text-center text-sm text-muted-foreground'>
+              <p>
+                © {new Date().getFullYear()} Theem. All rights reserved. Built with ❤️ by an indie
+                hacker.
+              </p>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
   );
 }

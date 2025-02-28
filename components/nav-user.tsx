@@ -18,6 +18,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { signOut } from '@/app/(login)/actions';
+import { useRouter } from 'next/navigation';
 
 export function NavUser({
   user,
@@ -29,6 +31,13 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const router = useRouter();
+
+  async function handleSignOut() {
+    await signOut();
+    router.refresh();
+    router.push('/');
+  }
 
   return (
     <SidebarMenu>
@@ -91,10 +100,14 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut className='w-4 h-4 mr-2' />
-              Log out
-            </DropdownMenuItem>
+            <form action={handleSignOut} className='w-full'>
+              <button type='submit' className='flex w-full'>
+                <DropdownMenuItem className='w-full flex-1 cursor-pointer'>
+                  <LogOut className='mr-2 h-4 w-4' />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </button>
+            </form>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

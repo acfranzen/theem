@@ -1,6 +1,6 @@
 'use client';
 
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { HslColorPicker } from 'react-colorful';
 import ColorPicker from '@/components/picker/color-picker';
 import { ThemeMode, ThemeColors, EditorMode } from '@/lib/picker/theme-utils';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Accordion,
   AccordionContent,
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/accordion';
 import FontSelector from '@/components/picker/font-selector';
 import { FontOption } from '@/lib/picker/font-utils';
+import ThemeDefaultsModal from '@/components/picker/theme-defaults-modal';
 
 // Import custom CSS for the hue picker
 import './hue-picker.css';
@@ -67,6 +68,7 @@ interface ThemeEditorProps {
   onEditorModeChange: (mode: EditorMode) => void;
   onThemeToggle: () => void;
   onFontChange: (font: FontOption) => void;
+  onSelectDefaultTheme: (themeName: string, theme: any) => void;
 }
 
 // Helper to convert HSL to hex
@@ -96,9 +98,11 @@ export default function ThemeEditor({
   onEditorModeChange,
   onThemeToggle,
   onFontChange,
+  onSelectDefaultTheme,
 }: ThemeEditorProps) {
   // Use a ref for the current hue to enable direct DOM updates
   const hueValueRef = useRef<HTMLSpanElement>(null);
+  const [defaultsModalOpen, setDefaultsModalOpen] = useState(false);
 
   // Update the DOM directly when currentHue changes
   useEffect(() => {
@@ -168,11 +172,21 @@ export default function ThemeEditor({
                   onChange={handleColorChange}
                 />
               </div>
-              <div className='flex w-full justify-center mt-2'>
-                <Button onClick={onRandomizeTheme} className='w-full' variant='outline'>
-                  <RefreshCw className='w-4 h-4 mr-2' />
-                  Randomize Theme
-                </Button>
+              <div className='flex flex-col gap-2 w-full justify-center mt-2'>
+                <div className='flex gap-2'>
+                  <Button onClick={onRandomizeTheme} className='flex-1' variant='outline'>
+                    <RefreshCw className='w-4 h-4 mr-2' />
+                    Randomize
+                  </Button>
+                  <Button
+                    onClick={() => setDefaultsModalOpen(true)}
+                    className='flex-1'
+                    variant='outline'
+                  >
+                    <Palette className='w-4 h-4 mr-2' />
+                    Defaults
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -183,6 +197,15 @@ export default function ThemeEditor({
           <>
             <ScrollArea>
               <div className='space-y-4 pr-4'>
+                {/* Theme defaults button for advanced mode */}
+                <Button
+                  onClick={() => setDefaultsModalOpen(true)}
+                  className='w-full mb-4'
+                  variant='outline'
+                >
+                  <Palette className='w-4 h-4 mr-2' />
+                  Choose Theme Defaults
+                </Button>
                 <Accordion type='single' collapsible defaultValue='core-theme' className='w-full'>
                   {/* Core Theme Colors */}
                   <AccordionItem value='core-theme'>
@@ -256,6 +279,14 @@ export default function ThemeEditor({
           </>
         )}
       </div>
+
+      {/* Theme Defaults Modal */}
+      <ThemeDefaultsModal
+        open={defaultsModalOpen}
+        onOpenChange={setDefaultsModalOpen}
+        onSelectTheme={onSelectDefaultTheme}
+        activeMode={activeMode}
+      />
     </div>
   );
 }

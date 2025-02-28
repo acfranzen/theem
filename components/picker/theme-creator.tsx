@@ -25,7 +25,7 @@ import {
 import ThemeEditor from '@/components/picker/theme-editor';
 import ThemePreview from '@/components/picker/theme-preview';
 import ThemeImportModal from '@/components/picker/theme-import-modal';
-import { defaultTheme } from './defaultTheme';
+import { defaultTheme } from './defaults/defaultTheme';
 import { ModeToggle } from '../mode-toggle';
 import { SidebarTrigger } from '../ui/sidebar';
 import { ScrollArea } from '../ui/scroll-area';
@@ -224,6 +224,51 @@ export default function ThemeCreator() {
     // Font will be applied by the FontSelector component through the FontProvider
   }, []);
 
+  // Handle selecting a default theme
+  const handleSelectDefaultTheme = useCallback(
+    (themeName: string, theme: any) => {
+      // Update the theme colors reference
+      themeColorsRef.current = {
+        light: { ...theme.light },
+        dark: { ...theme.dark },
+      };
+
+      // Get the current active mode
+      const activeMode = getActiveThemeMode(currentTheme);
+
+      // Apply the active theme to DOM
+      applyThemeToDOM(themeColorsRef.current, activeMode, document.documentElement, false);
+
+      // For the inactive theme, we'll use data attributes
+      const inactiveMode: ThemeMode = activeMode === 'light' ? 'dark' : 'light';
+
+      // Store the inactive theme using data attributes
+      const inactiveTheme = themeColorsRef.current[inactiveMode];
+      Object.entries(inactiveTheme).forEach(([key, value]) => {
+        // Convert key to camelCase for dataset property
+        const dataKey = toCamelCase(`${inactiveMode}-${key}`);
+
+        if (key === 'radius') {
+          document.documentElement.dataset[dataKey] = value;
+        } else {
+          document.documentElement.dataset[dataKey] = `hsl(${value})`;
+        }
+      });
+
+      // Extract hue from primary color
+      const primaryColor = theme[activeMode].primary;
+      const hue = extractHueFromColor(primaryColor);
+      currentHueRef.current = hue;
+
+      // Force UI update
+      setForceEditorUpdate(prev => prev + 1);
+
+      // Show toast notification
+      toast(`${themeName.replace('Theme', '')} theme applied successfully`);
+    },
+    [currentTheme]
+  );
+
   if (!mounted) {
     return <div>Loading...</div>;
   }
@@ -270,6 +315,7 @@ export default function ThemeCreator() {
           onEditorModeChange={handleEditorModeChange}
           onThemeToggle={handleThemeToggle}
           onFontChange={handleFontChange}
+          onSelectDefaultTheme={handleSelectDefaultTheme}
         />
 
         {/* Theme Preview Component */}

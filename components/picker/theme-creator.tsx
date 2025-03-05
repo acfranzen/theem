@@ -21,6 +21,7 @@ import {
   toCamelCase,
   updateThemeColor,
   updateAllThemeHues,
+  getRandomHue,
 } from '@/lib/picker/theme-utils';
 import ThemeEditor from '@/components/picker/theme-editor';
 import ThemePreview from '@/components/picker/theme-preview';
@@ -46,7 +47,7 @@ export default function ThemeCreator() {
   const { theme: currentTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [editorMode, setEditorMode] = useState<EditorMode>('simple');
-  const currentHueRef = useRef<number>(295); // Use ref instead of state
+  const currentHueRef = useRef<number>(getRandomHue()); // Use random hue instead of fixed 295
   const [currentFont, setCurrentFont] = useState<string>('Manrope'); // Default font
 
   // Track when we need to force an editor update (for slider and UI refresh)
@@ -58,16 +59,21 @@ export default function ThemeCreator() {
     setMounted(true);
   }, []);
 
-  // Initialize the currentHue value from the theme colors on mount
+  // Initialize theme with random hue on mount
   useEffect(() => {
     if (!mounted) return;
 
-    const mode = getActiveThemeMode(currentTheme);
-    const primaryColor = themeColorsRef.current[mode].primary;
-    const hue = extractHueFromColor(primaryColor);
-    currentHueRef.current = hue;
+    // Get the random hue from our ref
+    const randomHue = currentHueRef.current;
 
-    // Apply the theme on initial mount
+    // Update all theme colors with the random hue
+    const updatedThemes = updateAllHues(themeColorsRef.current, randomHue);
+    themeColorsRef.current = updatedThemes;
+
+    // Get the current active mode
+    const mode = getActiveThemeMode(currentTheme);
+
+    // Apply the theme with our randomized colors
     applyThemeToDOM(themeColorsRef.current, mode);
 
     // Apply the default font on initial mount
@@ -75,6 +81,9 @@ export default function ThemeCreator() {
     if (defaultFont) {
       applyFontToDocument(defaultFont);
     }
+
+    // Force UI update
+    setForceEditorUpdate(prev => prev + 1);
   }, [mounted, currentTheme, currentFont]);
 
   // Update all hues with new value without re-rendering

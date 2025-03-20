@@ -184,18 +184,40 @@ export default function ThemeCreator() {
   // Handle imported theme
   const handleImportTheme = useCallback(
     (importedTheme: Record<ThemeMode, ThemeColors>) => {
-      // Update the theme colors reference
-      themeColorsRef.current = importedTheme;
+      // Merge imported theme with existing theme, keeping existing values that
+      // aren't present in the imported theme (e.g., sidebar theme, chart colors)
+      const mergedTheme: Record<ThemeMode, ThemeColors> = {
+        light: { ...themeColorsRef.current.light, ...importedTheme.light },
+        dark: { ...themeColorsRef.current.dark, ...importedTheme.dark },
+      };
+
+      // Update the theme colors reference with merged theme
+      themeColorsRef.current = mergedTheme;
 
       // Get the current active mode
       const activeMode = getActiveThemeMode(currentTheme);
 
+      // Extract hue from primary color for the hue selector
+      const primaryColor = mergedTheme[activeMode].primary;
+      const hue = extractHueFromColor(primaryColor);
+
+      console.log('Imported theme primary color:', primaryColor);
+      console.log('Extracted hue value:', hue);
+
+      // Update the current hue reference
+      currentHueRef.current = hue;
+
+      // Apply the imported theme with the extracted hue
+      // This ensures all colors are properly synchronized with the hue value
+      const updatedThemes = updateAllHues(mergedTheme, hue);
+      themeColorsRef.current = updatedThemes;
+
       // Apply the active theme to DOM
-      applyThemeToDOM(importedTheme, activeMode, document.documentElement, false);
+      applyThemeToDOM(updatedThemes, activeMode, document.documentElement, true);
 
       // For the inactive theme, store as data attributes
       const inactiveMode: ThemeMode = activeMode === 'light' ? 'dark' : 'light';
-      const inactiveTheme = importedTheme[inactiveMode];
+      const inactiveTheme = updatedThemes[inactiveMode];
 
       Object.entries(inactiveTheme).forEach(([key, value]) => {
         const dataKey = toCamelCase(`${inactiveMode}-${key}`);
@@ -213,13 +235,10 @@ export default function ThemeCreator() {
         }
       });
 
-      // Extract hue from primary color for the hue selector
-      const primaryColor = importedTheme[activeMode].primary;
-      const hue = extractHueFromColor(primaryColor);
-      currentHueRef.current = hue;
-
-      // Force UI update
-      setForceEditorUpdate(prev => prev + 1);
+      // Force UI update with setTimeout to ensure it happens after state updates
+      setTimeout(() => {
+        setForceEditorUpdate(prev => prev + 1);
+      }, 0);
 
       // Show success message
       toast('Theme imported successfully');
@@ -236,11 +255,14 @@ export default function ThemeCreator() {
   // Handle selecting a default theme
   const handleSelectDefaultTheme = useCallback(
     (themeName: string, theme: any) => {
-      // Update the theme colors reference
-      themeColorsRef.current = {
-        light: { ...theme.light },
-        dark: { ...theme.dark },
+      // Merge with existing theme to preserve custom values
+      const mergedTheme = {
+        light: { ...themeColorsRef.current.light, ...theme.light },
+        dark: { ...themeColorsRef.current.dark, ...theme.dark },
       };
+
+      // Update the theme colors reference
+      themeColorsRef.current = mergedTheme;
 
       // Get the current active mode
       const activeMode = getActiveThemeMode(currentTheme);
@@ -312,6 +334,7 @@ export default function ThemeCreator() {
       <div className='flex flex-col md:flex-row flex-1 px-4 bg-card'>
         {/* Theme Editor Component - avoid remounting with key changes */}
         <ThemeEditor
+          key={`editor-${forceEditorUpdate}`}
           themeColors={themeColorsRef.current}
           activeMode={activeMode}
           currentHue={currentHueRef.current}

@@ -134,6 +134,9 @@ export default function ThemeImportModal({ open, onOpenChange, onImport }: Theme
 
     try {
       const parsedTheme = parseThemeCode(themeCode);
+
+      // Instead of directly replacing with onImport(parsedTheme),
+      // we'll use a merging approach where the function can merge with existing values
       onImport(parsedTheme);
       onOpenChange(false);
       toast('Theme imported successfully');

@@ -1,9 +1,15 @@
-import { stripe } from '../payments/stripe';
+import { getStripeClient, hasStripeSecretKey } from '../payments/stripe';
 import { db } from './drizzle';
 import { users, teams, teamMembers } from './schema';
 import { hashPassword } from '@/lib/auth/session';
 
 async function createStripeProducts() {
+  if (!hasStripeSecretKey()) {
+    console.log('Skipping Stripe provisioning: STRIPE_SECRET_KEY is not set.');
+    return;
+  }
+
+  const stripe = getStripeClient();
   console.log('Creating Stripe products and prices...');
 
   const baseProduct = await stripe.products.create({

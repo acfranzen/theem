@@ -375,3 +375,84 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer base {
+  :root {
+    --style-profile: minimal-swiss;
+    --style-density: comfortable;
+    --style-choreography: subtle;
+    --style-surface-family: plain;
+
+    --style-radius-xs: 4px;
+    --style-radius-sm: 8px;
+    --style-radius-md: 12px;
+    --style-radius-lg: 18px;
+    --style-radius-xl: 24px;
+
+    --style-border-width: 1px;
+    --style-panel-border-width: 1px;
+    --style-control-border-width: 1px;
+
+    --style-spacing-xs: 0.25rem;
+    --style-spacing-sm: 0.5rem;
+    --style-spacing-md: 0.75rem;
+    --style-spacing-lg: 1rem;
+    --style-spacing-xl: 1.5rem;
+
+    --style-duration-fast: 120ms;
+    --style-duration-base: 180ms;
+    --style-duration-slow: 260ms;
+    --style-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+    --style-easing-entrance: cubic-bezier(0.15, 1, 0.3, 1);
+
+    --style-elevation-low: 0 1px 2px hsl(220 40% 2% / 0.08);
+    --style-elevation-mid: 0 6px 14px hsl(220 40% 2% / 0.12);
+    --style-elevation-high: 0 12px 28px hsl(220 40% 2% / 0.18);
+
+    --style-blur-sm: 4px;
+    --style-blur-md: 8px;
+    --style-blur-lg: 14px;
+
+    --style-fx-panel-bg: hsl(var(--card));
+    --style-fx-panel-border: hsl(var(--border));
+    --style-fx-panel-shadow: var(--style-elevation-mid);
+    --style-fx-panel-blur: 0px;
+    --style-fx-noise-opacity: 0;
+    --style-fx-highlight-opacity: 0;
+  }
+}
+
+@layer utilities {
+  .style-surface-panel {
+    position: relative;
+    border-width: var(--style-panel-border-width);
+    border-style: solid;
+    border-color: var(--style-fx-panel-border);
+    background: var(--style-fx-panel-bg);
+    box-shadow: var(--style-fx-panel-shadow);
+    backdrop-filter: blur(var(--style-fx-panel-blur));
+    transition-property: background-color, border-color, box-shadow, transform;
+    transition-duration: var(--style-duration-base);
+    transition-timing-function: var(--style-easing-standard);
+    overflow: hidden;
+  }
+
+  .style-surface-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: var(--style-fx-highlight-opacity);
+    background: linear-gradient(140deg, hsl(0 0% 100% / 0.72), transparent 42%);
+    pointer-events: none;
+  }
+
+  .style-surface-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: var(--style-fx-noise-opacity);
+    background-image: radial-gradient(hsl(0 0% 100% / 0.3) 0.3px, transparent 0.3px);
+    background-size: 4px 4px;
+    pointer-events: none;
+  }
+}

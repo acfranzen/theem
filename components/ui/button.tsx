@@ -3,6 +3,8 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
+import { StyleProfileId } from '@/lib/style-system/types';
+import { resolveComponentRecipe } from '@/lib/style-system/component-recipes';
 
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
@@ -36,13 +38,27 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  styleProfile?: StyleProfileId;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, styleProfile, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
+    const recipeClass = resolveComponentRecipe('button', {
+      styleProfile,
+      variant: variant ?? 'default',
+    });
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <Comp
+        className={cn(
+          buttonVariants({ variant, size }),
+          'transition-[transform,box-shadow,background-color,color,border-color] duration-[var(--style-duration-base)] ease-[var(--style-easing-standard)]',
+          recipeClass,
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
     );
   }
 );

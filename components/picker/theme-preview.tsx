@@ -76,15 +76,17 @@ import {
   MenubarTrigger,
 } from '@/components/ui/menubar';
 import { Eye, EyeOff } from 'lucide-react';
+import { StyleLayoutTemplates } from '@/components/picker/templates/style-layout-templates';
+import { StyleProfileId } from '@/lib/style-system/types';
 
 // Import the component to variable map
 import { componentToVariableMap } from '@/components/picker/theme-tooltip';
 
 interface ThemePreviewProps {
-  // No need to pass theme styles as props since they're applied globally
+  styleProfile: StyleProfileId;
 }
 
-export default function ThemePreview({}: ThemePreviewProps) {
+export default function ThemePreview({ styleProfile }: ThemePreviewProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [progress, setProgress] = useState(13);
   const [isInspectMode, setIsInspectMode] = useState(false);
@@ -122,7 +124,12 @@ export default function ThemePreview({}: ThemePreviewProps) {
         {isInspectMode ? (
           <InspectionPreview date={date} setDate={setDate} progress={progress} />
         ) : (
-          <NormalPreview date={date} setDate={setDate} progress={progress} />
+          <NormalPreview
+            date={date}
+            setDate={setDate}
+            progress={progress}
+            styleProfile={styleProfile}
+          />
         )}
       </div>
     </div>
@@ -134,13 +141,17 @@ function NormalPreview({
   date,
   setDate,
   progress,
+  styleProfile,
 }: {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   progress: number;
+  styleProfile: StyleProfileId;
 }) {
   return (
-    <Tabs defaultValue='buttons-inputs' className='w-full'>
+    <>
+      <StyleLayoutTemplates styleProfile={styleProfile} />
+      <Tabs defaultValue='buttons-inputs' className='w-full'>
       <TabsList className='grid grid-cols-4 mb-8'>
         <TabsTrigger value='buttons-inputs'>Buttons & Inputs</TabsTrigger>
         <TabsTrigger value='layout'>Layout & Content</TabsTrigger>
@@ -583,7 +594,8 @@ function NormalPreview({
           </Table>
         </section>
       </TabsContent>
-    </Tabs>
+      </Tabs>
+    </>
   );
 }
 

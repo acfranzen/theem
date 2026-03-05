@@ -31,6 +31,10 @@ import { ModeToggle } from '../mode-toggle';
 import { SidebarTrigger } from '../ui/sidebar';
 import { ScrollArea } from '../ui/scroll-area';
 import { FontOption, applyFontToDocument, fontOptions } from '@/lib/picker/font-utils';
+import { applyStyleProfileToDOM } from '@/lib/style-system/dom';
+import { DEFAULT_STYLE_PROFILE_ID } from '@/lib/style-system/packs';
+import { StyleProfileId } from '@/lib/style-system/types';
+import { loadStyleProfile, persistStyleProfile } from '@/lib/style-system/storage';
 
 // Type for theme color key
 type ThemeColorKey = keyof typeof defaultTheme.light;
@@ -49,6 +53,7 @@ export default function ThemeCreator() {
   const [editorMode, setEditorMode] = useState<EditorMode>('simple');
   const currentHueRef = useRef<number>(getRandomHue()); // Use random hue instead of fixed 295
   const [currentFont, setCurrentFont] = useState<string>('Manrope'); // Default font
+  const [styleProfile, setStyleProfile] = useState<StyleProfileId>(DEFAULT_STYLE_PROFILE_ID);
 
   // Track when we need to force an editor update (for slider and UI refresh)
   const [forceEditorUpdate, setForceEditorUpdate] = useState(0);
@@ -85,6 +90,17 @@ export default function ThemeCreator() {
     // Force UI update
     setForceEditorUpdate(prev => prev + 1);
   }, [mounted, currentTheme, currentFont]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    setStyleProfile(loadStyleProfile());
+  }, [mounted]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const mode = getActiveThemeMode(currentTheme);
+    applyStyleProfileToDOM({ styleId: styleProfile, mode });
+  }, [mounted, currentTheme, styleProfile]);
 
   // Update all hues with new value without re-rendering
   const handleHueChange = useCallback(
@@ -165,13 +181,24 @@ export default function ThemeCreator() {
     // Apply the new theme with forceApply=true to ensure it's applied
     // regardless of current theme class state
     applyThemeToDOM(themeColorsRef.current, newMode, document.documentElement, true);
+    applyStyleProfileToDOM({ styleId: styleProfile, mode: newMode });
 
     // Toggle the theme which will update the classes
     setTheme(newMode);
 
     // Force a UI update after theme change
     setForceEditorUpdate(prev => prev + 1);
-  }, [currentTheme, setTheme]);
+  }, [currentTheme, setTheme, styleProfile]);
+
+  const handleStyleProfileChange = useCallback(
+    (styleId: StyleProfileId) => {
+      setStyleProfile(styleId);
+      persistStyleProfile(styleId);
+      const mode = getActiveThemeMode(currentTheme);
+      applyStyleProfileToDOM({ styleId, mode });
+    },
+    [currentTheme]
+  );
 
   // Handle copy to clipboard
   const copyToClipboard = useCallback(() => {
@@ -341,6 +368,7 @@ export default function ThemeCreator() {
           editorMode={editorMode}
           currentTheme={currentTheme}
           currentFont={currentFont}
+          styleProfile={styleProfile}
           onColorChange={handleColorChange}
           onHueChange={handleHueChange}
           onRandomizeTheme={handleRandomizeTheme}
@@ -348,11 +376,12 @@ export default function ThemeCreator() {
           onThemeToggle={handleThemeToggle}
           onFontChange={handleFontChange}
           onSelectDefaultTheme={handleSelectDefaultTheme}
+          onStyleProfileChange={handleStyleProfileChange}
         />
 
         {/* Theme Preview Component */}
         <ScrollArea className='w-full h-[calc(100vh-3.5rem-2rem)] bg-background'>
-          <ThemePreview />
+          <ThemePreview styleProfile={styleProfile} />
         </ScrollArea>
       </div>
 

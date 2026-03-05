@@ -1,11 +1,28 @@
 import Stripe from 'stripe';
 import { redirect } from 'next/navigation';
-import { Team } from '@/lib/db/schema';
-import { getTeamByStripeCustomerId, getUser, updateTeamSubscription } from '@/lib/db/queries';
+import type { Team } from '@/lib/db/schema';
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-01-27.acacia',
-});
+let stripeClient: Stripe | null = null;
+
+export function hasStripeSecretKey() {
+  return Boolean(process.env.STRIPE_SECRET_KEY);
+}
+
+export function getStripeClient() {
+  if (stripeClient) {
+    return stripeClient;
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+  }
+
+  stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-01-27.acacia',
+  });
+
+  return stripeClient;
+}
 
 export async function createCheckoutSession({
   team,
@@ -14,11 +31,18 @@ export async function createCheckoutSession({
   team: Team | null;
   priceId: string;
 }) {
+  if (!hasStripeSecretKey() || !priceId) {
+    redirect('/pricing?billing=unavailable');
+  }
+
+  const { getUser } = await import('@/lib/db/queries');
   const user = await getUser();
 
   if (!team || !user) {
     redirect(`/sign-up?redirect=checkout&priceId=${priceId}`);
   }
+
+  const stripe = getStripeClient();
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
@@ -43,10 +67,11 @@ export async function createCheckoutSession({
 }
 
 export async function createCustomerPortalSession(team: Team) {
-  if (!team.stripeCustomerId || !team.stripeProductId) {
+  if (!hasStripeSecretKey() || !team.stripeCustomerId || !team.stripeProductId) {
     redirect('/pricing');
   }
 
+  const stripe = getStripeClient();
   let configuration: Stripe.BillingPortal.Configuration;
   const configurations = await stripe.billingPortal.configurations.list();
 
@@ -102,6 +127,7 @@ export async function createCustomerPortalSession(team: Team) {
 }
 
 export async function handleSubscriptionChange(subscription: Stripe.Subscription) {
+  const { getTeamByStripeCustomerId, updateTeamSubscription } = await import('@/lib/db/queries');
   const customerId = subscription.customer as string;
   const subscriptionId = subscription.id;
   const status = subscription.status;
@@ -132,6 +158,11 @@ export async function handleSubscriptionChange(subscription: Stripe.Subscription
 }
 
 export async function getStripePrices() {
+  if (!hasStripeSecretKey()) {
+    return [];
+  }
+
+  const stripe = getStripeClient();
   const prices = await stripe.prices.list({
     expand: ['data.product'],
     active: true,
@@ -149,6 +180,11 @@ export async function getStripePrices() {
 }
 
 export async function getStripeProducts() {
+  if (!hasStripeSecretKey()) {
+    return [];
+  }
+
+  const stripe = getStripeClient();
   const products = await stripe.products.list({
     active: true,
     expand: ['data.default_price'],

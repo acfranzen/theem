@@ -1,12 +1,17 @@
 import { eq } from 'drizzle-orm';
-import { db } from '@/lib/db/drizzle';
-import { users, teams, teamMembers } from '@/lib/db/schema';
 import { setSession } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '@/lib/payments/stripe';
+import { getStripeClient, hasStripeSecretKey } from '@/lib/payments/stripe';
 import Stripe from 'stripe';
 
 export async function GET(request: NextRequest) {
+  if (!hasStripeSecretKey()) {
+    return NextResponse.json(
+      { error: 'Stripe checkout is unavailable. Set STRIPE_SECRET_KEY to enable this route.' },
+      { status: 503 }
+    );
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const sessionId = searchParams.get('session_id');
 
@@ -15,6 +20,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const stripe = getStripeClient();
+    const [{ db }, { users, teams, teamMembers }] = await Promise.all([
+      import('@/lib/db/drizzle'),
+      import('@/lib/db/schema'),
+    ]);
+
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
       expand: ['customer', 'subscription'],
     });

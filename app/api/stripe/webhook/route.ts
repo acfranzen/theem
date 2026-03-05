@@ -1,16 +1,33 @@
 import Stripe from 'stripe';
-import { handleSubscriptionChange, stripe } from '@/lib/payments/stripe';
+import { getStripeClient, handleSubscriptionChange, hasStripeSecretKey } from '@/lib/payments/stripe';
 import { NextRequest, NextResponse } from 'next/server';
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-
 export async function POST(request: NextRequest) {
+  if (!hasStripeSecretKey()) {
+    return NextResponse.json(
+      { error: 'Stripe webhook is unavailable. Set STRIPE_SECRET_KEY to enable this route.' },
+      { status: 503 }
+    );
+  }
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    return NextResponse.json(
+      { error: 'Stripe webhook is unavailable. Set STRIPE_WEBHOOK_SECRET to enable this route.' },
+      { status: 503 }
+    );
+  }
+
   const payload = await request.text();
-  const signature = request.headers.get('stripe-signature') as string;
+  const signature = request.headers.get('stripe-signature');
+  if (!signature) {
+    return NextResponse.json({ error: 'Missing stripe-signature header.' }, { status: 400 });
+  }
 
   let event: Stripe.Event;
 
   try {
+    const stripe = getStripeClient();
     event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
   } catch (err) {
     console.error('Webhook signature verification failed.', err);

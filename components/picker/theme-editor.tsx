@@ -19,6 +19,15 @@ import {
 import FontSelector from '@/components/picker/font-selector';
 import { FontOption } from '@/lib/picker/font-utils';
 import ThemeDefaultsModal from '@/components/picker/theme-defaults-modal';
+import { StyleProfileId } from '@/lib/style-system/types';
+import { STYLE_PROFILE_OPTIONS } from '@/lib/style-system/packs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Import custom CSS for the hue picker
 import './hue-picker.css';
@@ -62,6 +71,7 @@ interface ThemeEditorProps {
   editorMode: EditorMode;
   currentTheme: string | undefined;
   currentFont: string;
+  styleProfile: StyleProfileId;
   onColorChange: (key: string, value: string, mode: ThemeMode) => void;
   onHueChange: (newHue: number) => void;
   onRandomizeTheme: () => void;
@@ -69,6 +79,7 @@ interface ThemeEditorProps {
   onThemeToggle: () => void;
   onFontChange: (font: FontOption) => void;
   onSelectDefaultTheme: (themeName: string, theme: any) => void;
+  onStyleProfileChange: (styleId: StyleProfileId) => void;
 }
 
 // Helper to convert HSL to hex
@@ -92,6 +103,7 @@ export default function ThemeEditor({
   editorMode,
   currentTheme,
   currentFont,
+  styleProfile,
   onColorChange,
   onHueChange,
   onRandomizeTheme,
@@ -99,6 +111,7 @@ export default function ThemeEditor({
   onThemeToggle,
   onFontChange,
   onSelectDefaultTheme,
+  onStyleProfileChange,
 }: ThemeEditorProps) {
   // Use a ref for the current hue to enable direct DOM updates
   const hueValueRef = useRef<HTMLSpanElement>(null);
@@ -153,6 +166,25 @@ export default function ThemeEditor({
         <div className='space-y-4 mb-6 border-b pb-4'>
           <Label className='text-base font-medium'>Font Family</Label>
           <FontSelector value={currentFont} onValueChange={onFontChange} />
+        </div>
+
+        <div className='space-y-3 mb-6 border-b pb-4'>
+          <Label className='text-base font-medium'>Style Profile</Label>
+          <Select value={styleProfile} onValueChange={value => onStyleProfileChange(value as StyleProfileId)}>
+            <SelectTrigger>
+              <SelectValue placeholder='Select a style profile' />
+            </SelectTrigger>
+            <SelectContent>
+              {STYLE_PROFILE_OPTIONS.map(option => (
+                <SelectItem key={option.id} value={option.id}>
+                  <div className='flex flex-col'>
+                    <span>{option.name}</span>
+                    <span className='text-xs text-muted-foreground'>{option.description}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Simple Mode UI */}

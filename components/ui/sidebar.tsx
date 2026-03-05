@@ -7,6 +7,8 @@ import { PanelLeftIcon } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
+import { StyleProfileId } from '@/lib/style-system/types'
+import { resolveComponentRecipe } from '@/lib/style-system/component-recipes'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -155,6 +157,7 @@ function Sidebar({
   side = "left",
   variant = "sidebar",
   collapsible = "offcanvas",
+  styleProfile,
   className,
   children,
   ...props
@@ -162,6 +165,7 @@ function Sidebar({
   side?: "left" | "right"
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
+  styleProfile?: StyleProfileId
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
@@ -171,6 +175,7 @@ function Sidebar({
         data-slot="sidebar"
         className={cn(
           "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
+          resolveComponentRecipe('sidebar', { styleProfile }),
           className
         )}
         {...props}
@@ -235,6 +240,7 @@ function Sidebar({
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
+          resolveComponentRecipe('sidebar', { styleProfile }),
           className
         )}
         {...props}

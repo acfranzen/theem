@@ -1,9 +1,10 @@
-import { stripe } from '../payments/stripe';
+import { getStripeClient } from '../payments/stripe';
 import { db } from './drizzle';
 import { users, teams, teamMembers } from './schema';
 import { hashPassword } from '@/lib/auth/session';
 
 async function createStripeProducts() {
+  const stripe = getStripeClient();
   console.log('Creating Stripe products and prices...');
 
   const baseProduct = await stripe.products.create({

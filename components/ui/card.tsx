@@ -1,12 +1,22 @@
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
+import { StyleProfileId } from '@/lib/style-system/types';
+import { resolveComponentRecipe } from '@/lib/style-system/component-recipes';
 
-const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  styleProfile?: StyleProfileId;
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, styleProfile, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('rounded-xl border bg-card text-card-foreground shadow', className)}
+      className={cn(
+        'rounded-xl border bg-card text-card-foreground shadow transition-[box-shadow,border-color,background-color] duration-[var(--style-duration-base)] ease-[var(--style-easing-standard)]',
+        resolveComponentRecipe('card', { styleProfile }),
+        className
+      )}
       {...props}
     />
   )

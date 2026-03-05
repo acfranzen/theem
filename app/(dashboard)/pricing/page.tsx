@@ -3,7 +3,8 @@ import { Check } from 'lucide-react';
 import { getStripePrices, getStripeProducts } from '@/lib/payments/stripe';
 import { SubmitButton } from './submit-button';
 
-// Prices are fresh for one hour max
+// Pricing relies on runtime Stripe credentials; avoid static prerender at build.
+export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
 
 export default async function PricingPage() {

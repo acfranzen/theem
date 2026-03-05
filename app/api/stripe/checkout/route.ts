@@ -1,10 +1,17 @@
 import { eq } from 'drizzle-orm';
 import { setSession } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
-import { getStripeClient } from '@/lib/payments/stripe';
+import { getStripeClient, hasStripeSecretKey } from '@/lib/payments/stripe';
 import Stripe from 'stripe';
 
 export async function GET(request: NextRequest) {
+  if (!hasStripeSecretKey()) {
+    return NextResponse.json(
+      { error: 'Stripe checkout is unavailable. Set STRIPE_SECRET_KEY to enable this route.' },
+      { status: 503 }
+    );
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const sessionId = searchParams.get('session_id');
 

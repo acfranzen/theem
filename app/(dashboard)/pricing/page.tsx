@@ -1,6 +1,6 @@
 import { checkoutAction } from '@/lib/payments/actions';
 import { Check } from 'lucide-react';
-import { getStripePrices, getStripeProducts } from '@/lib/payments/stripe';
+import { getStripePrices, getStripeProducts, hasStripeSecretKey } from '@/lib/payments/stripe';
 import { SubmitButton } from './submit-button';
 
 // Pricing relies on runtime Stripe credentials; avoid static prerender at build.
@@ -9,6 +9,7 @@ export const revalidate = 3600;
 
 export default async function PricingPage() {
   const [prices, products] = await Promise.all([getStripePrices(), getStripeProducts()]);
+  const hasStripe = hasStripeSecretKey();
 
   const basePlan = products.find(product => product.name === 'Base');
   const plusPlan = products.find(product => product.name === 'Plus');
@@ -26,6 +27,7 @@ export default async function PricingPage() {
           trialDays={basePrice?.trialPeriodDays || 7}
           features={['Unlimited Usage', 'Unlimited Workspace Members', 'Email Support']}
           priceId={basePrice?.id}
+          checkoutEnabled={hasStripe && Boolean(basePrice?.id)}
         />
         <PricingCard
           name={plusPlan?.name || 'Plus'}
@@ -38,6 +40,7 @@ export default async function PricingPage() {
             '24/7 Support + Slack Access',
           ]}
           priceId={plusPrice?.id}
+          checkoutEnabled={hasStripe && Boolean(plusPrice?.id)}
         />
       </div>
     </main>
@@ -51,6 +54,7 @@ function PricingCard({
   trialDays,
   features,
   priceId,
+  checkoutEnabled,
 }: {
   name: string;
   price: number;
@@ -58,6 +62,7 @@ function PricingCard({
   trialDays: number;
   features: string[];
   priceId?: string;
+  checkoutEnabled: boolean;
 }) {
   return (
     <div className='pt-6'>
@@ -77,7 +82,7 @@ function PricingCard({
       </ul>
       <form action={checkoutAction}>
         <input type='hidden' name='priceId' value={priceId} />
-        <SubmitButton />
+        <SubmitButton disabled={!checkoutEnabled} />
       </form>
     </div>
   );

@@ -1,13 +1,20 @@
 import Stripe from 'stripe';
-import { getStripeClient, handleSubscriptionChange } from '@/lib/payments/stripe';
+import { getStripeClient, handleSubscriptionChange, hasStripeSecretKey } from '@/lib/payments/stripe';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
+  if (!hasStripeSecretKey()) {
+    return NextResponse.json(
+      { error: 'Stripe webhook is unavailable. Set STRIPE_SECRET_KEY to enable this route.' },
+      { status: 503 }
+    );
+  }
+
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
     return NextResponse.json(
-      { error: 'STRIPE_WEBHOOK_SECRET environment variable is not set.' },
-      { status: 500 }
+      { error: 'Stripe webhook is unavailable. Set STRIPE_WEBHOOK_SECRET to enable this route.' },
+      { status: 503 }
     );
   }
 

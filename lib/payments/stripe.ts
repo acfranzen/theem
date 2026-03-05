@@ -4,7 +4,7 @@ import type { Team } from '@/lib/db/schema';
 
 let stripeClient: Stripe | null = null;
 
-function hasStripeSecretKey() {
+export function hasStripeSecretKey() {
   return Boolean(process.env.STRIPE_SECRET_KEY);
 }
 
@@ -31,6 +31,10 @@ export async function createCheckoutSession({
   team: Team | null;
   priceId: string;
 }) {
+  if (!hasStripeSecretKey() || !priceId) {
+    redirect('/pricing?billing=unavailable');
+  }
+
   const { getUser } = await import('@/lib/db/queries');
   const user = await getUser();
 
@@ -63,7 +67,7 @@ export async function createCheckoutSession({
 }
 
 export async function createCustomerPortalSession(team: Team) {
-  if (!team.stripeCustomerId || !team.stripeProductId) {
+  if (!hasStripeSecretKey() || !team.stripeCustomerId || !team.stripeProductId) {
     redirect('/pricing');
   }
 

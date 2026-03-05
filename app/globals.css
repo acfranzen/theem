@@ -375,3 +375,165 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   STYLE SYSTEM — Extended CSS Custom Properties
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --style-border-width: 1px;
+  --style-opacity: 1;
+  --style-blur: 0px;
+  --style-shadow: none;
+  --style-border-style: solid;
+  --style-border-color: inherit;
+  --style-spacing: 8px;
+  --style-panel-gap: 1rem;
+  --style-card-padding: 1.5rem;
+  --style-section-gap: 2rem;
+  --style-density: comfortable;
+  --style-duration: 200ms;
+  --style-easing: ease-out;
+}
+
+/* ─── Shared style-card class (used by dashboard preview) ──────── */
+
+.style-card {
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: var(--style-border-width) var(--style-border-style) hsl(var(--border));
+  border-radius: var(--radius);
+  transition: all var(--style-duration) var(--style-easing);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MINIMAL SWISS
+   ───────────────────────────────────────────────────────────────────
+   Mathematical grid. Zero ornamentation. Monochrome authority.
+   Every pixel has a reason to exist.
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-style='swiss'] .style-card {
+  border-radius: 2px;
+  box-shadow: none;
+  border-width: 1px;
+}
+
+[data-style='swiss'] .style-preview-container {
+  border-radius: 2px;
+}
+
+/* Swiss: tight, ruled, editorial feel */
+[data-style='swiss'] .style-card:hover {
+  background: hsl(var(--muted));
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLASSMORPHISM
+   ───────────────────────────────────────────────────────────────────
+   Frosted translucency. Depth through layered blur. Luminous
+   highlights. Like peering through rain-streaked glass at neon.
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-style='glass'] .style-card {
+  background: hsl(var(--card) / var(--style-opacity, 0.7));
+  backdrop-filter: blur(var(--style-blur, 16px));
+  -webkit-backdrop-filter: blur(var(--style-blur, 16px));
+  border: 1px solid hsl(var(--border) / 0.2);
+  border-radius: 12px;
+  box-shadow:
+    0 8px 32px hsl(var(--foreground) / 0.06),
+    inset 0 1px 0 hsl(var(--card) / 0.4);
+}
+
+[data-style='glass'] .style-preview-container {
+  border-radius: 16px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, hsl(var(--background) / 0.95) 0%, hsl(var(--muted) / 0.8) 100%);
+}
+
+[data-style='glass'] .style-card:hover {
+  box-shadow:
+    0 12px 40px hsl(var(--foreground) / 0.1),
+    inset 0 1px 0 hsl(var(--card) / 0.5);
+  border-color: hsl(var(--primary) / 0.15);
+}
+
+/* Glass glow effect (when enabled via controls) */
+[data-style='glass'] .style-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.08) 0%,
+    transparent 50%,
+    hsl(var(--accent) / 0.06) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+[data-style='glass'] .style-card:hover::before {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NEUBRUTALISM
+   ───────────────────────────────────────────────────────────────────
+   Thick borders. Harsh offset shadows. Clashing saturated colors.
+   Raw chunky type. Maximum impact through deliberate collision.
+   Every element screams. Nothing whispers.
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-style='neubrutalism'] .style-card {
+  border-radius: 0;
+  border: 3px solid hsl(var(--foreground));
+  box-shadow: 4px 4px 0px 0px hsl(var(--foreground));
+  position: relative;
+  transition: transform 100ms cubic-bezier(0, 0, 0, 1),
+    box-shadow 100ms cubic-bezier(0, 0, 0, 1);
+}
+
+[data-style='neubrutalism'] .style-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0px 0px hsl(var(--foreground));
+}
+
+[data-style='neubrutalism'] .style-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px hsl(var(--foreground));
+}
+
+[data-style='neubrutalism'] .style-preview-container {
+  border-radius: 0;
+  border-width: 3px;
+}
+
+/* Neubrutalism noise texture overlay */
+[data-style='neubrutalism'] .style-preview-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Reduced Motion — respect user preferences
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .style-card,
+  [data-style] .style-card {
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}

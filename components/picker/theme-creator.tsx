@@ -23,23 +23,30 @@ import {
   updateAllThemeHues,
   getRandomHue,
 } from '@/lib/picker/theme-utils';
+import { useStyleContext } from '@/lib/picker/style-context';
+import { resolveStyleToDOM } from '@/lib/picker/style-resolver';
 import ThemeEditor from '@/components/picker/theme-editor';
-import ThemePreview from '@/components/picker/theme-preview';
 import ThemeImportModal from '@/components/picker/theme-import-modal';
+import StyleSelector from '@/components/picker/style-selector';
+import StyleControls from '@/components/picker/style-controls';
+import PreviewSwitcher from '@/components/picker/preview/preview-switcher';
 import { defaultTheme } from './defaults/defaultTheme';
 import { ModeToggle } from '../mode-toggle';
 import { SidebarTrigger } from '../ui/sidebar';
 import { ScrollArea } from '../ui/scroll-area';
 import { FontOption, applyFontToDocument, fontOptions } from '@/lib/picker/font-utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Type for theme color key
 type ThemeColorKey = keyof typeof defaultTheme.light;
 
 export default function ThemeCreator() {
+  const { activeStyle, profile, resolvedSurface, resolvedComposition } = useStyleContext();
+
   // Use a ref to store the current theme without triggering re-renders
   const themeColorsRef = useRef<Record<ThemeMode, ThemeColors>>({
-    light: { ...defaultTheme.light },
-    dark: { ...defaultTheme.dark },
+    light: { ...profile.tokens.light },
+    dark: { ...profile.tokens.dark },
   });
 
   // Only use state for UI-driven elements that need rendering
@@ -47,8 +54,9 @@ export default function ThemeCreator() {
   const { theme: currentTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [editorMode, setEditorMode] = useState<EditorMode>('simple');
-  const currentHueRef = useRef<number>(getRandomHue()); // Use random hue instead of fixed 295
-  const [currentFont, setCurrentFont] = useState<string>('Manrope'); // Default font
+  const currentHueRef = useRef<number>(getRandomHue());
+  const [currentFont, setCurrentFont] = useState<string>('Manrope');
+  const [leftTab, setLeftTab] = useState<string>('styles');
 
   // Track when we need to force an editor update (for slider and UI refresh)
   const [forceEditorUpdate, setForceEditorUpdate] = useState(0);
@@ -59,22 +67,20 @@ export default function ThemeCreator() {
     setMounted(true);
   }, []);
 
-  // Initialize theme with random hue on mount
+  // When style changes, apply the new profile's tokens
   useEffect(() => {
     if (!mounted) return;
 
-    // Get the random hue from our ref
-    const randomHue = currentHueRef.current;
+    // Load the style's token set
+    themeColorsRef.current = {
+      light: { ...profile.tokens.light },
+      dark: { ...profile.tokens.dark },
+    };
 
-    // Update all theme colors with the random hue
-    const updatedThemes = updateAllHues(themeColorsRef.current, randomHue);
-    themeColorsRef.current = updatedThemes;
-
-    // Get the current active mode
     const mode = getActiveThemeMode(currentTheme);
 
-    // Apply the theme with our randomized colors
-    applyThemeToDOM(themeColorsRef.current, mode);
+    // Apply full style resolution (tokens + composition + surface)
+    resolveStyleToDOM(profile, mode, resolvedSurface, resolvedComposition);
 
     // Apply the default font on initial mount
     const defaultFont = fontOptions.find(font => font.family === currentFont);
@@ -84,12 +90,11 @@ export default function ThemeCreator() {
 
     // Force UI update
     setForceEditorUpdate(prev => prev + 1);
-  }, [mounted, currentTheme, currentFont]);
+  }, [mounted, activeStyle, profile, currentTheme, resolvedSurface, resolvedComposition, currentFont]);
 
   // Update all hues with new value without re-rendering
   const handleHueChange = useCallback(
     (newHue: number) => {
-      // Use the utility function from theme-utils
       updateAllThemeHues({
         newHue,
         themeColorsRef,
@@ -104,7 +109,6 @@ export default function ThemeCreator() {
   // Handle color change for a specific color with complete HSL values
   const handleColorChange = useCallback(
     (key: string, value: string, mode: ThemeMode) => {
-      // Use the utility function from theme-utils
       updateThemeColor({
         themeColorsRef,
         key,
@@ -124,22 +128,13 @@ export default function ThemeCreator() {
     currentHueRef.current = newHue;
     themeColorsRef.current = updatedThemes;
 
-    // Get the current active mode
     const activeMode = getActiveThemeMode(currentTheme);
-
-    // Apply the active theme to DOM
-    // Use forceApply=false here since we only want to apply the current theme
     applyThemeToDOM(themeColorsRef.current, activeMode, document.documentElement, false);
 
-    // For the inactive theme, we'll use data attributes
     const inactiveMode: ThemeMode = activeMode === 'light' ? 'dark' : 'light';
-
-    // Store the inactive theme using data attributes
     const inactiveTheme = themeColorsRef.current[inactiveMode];
     Object.entries(inactiveTheme).forEach(([key, value]) => {
-      // Convert key to camelCase for dataset property
       const dataKey = toCamelCase(`${inactiveMode}-${key}`);
-
       if (key === 'radius') {
         document.documentElement.dataset[dataKey] = value;
       } else {
@@ -147,7 +142,6 @@ export default function ThemeCreator() {
       }
     });
 
-    // Trigger a force update on the parent to refresh UI elements
     setForceEditorUpdate(prev => prev + 1);
   }, [currentTheme]);
 
@@ -158,18 +152,10 @@ export default function ThemeCreator() {
 
   // Handle theme toggle
   const handleThemeToggle = useCallback(() => {
-    // Get the current theme mode and determine what we're switching to
     const currentMode = getActiveThemeMode(currentTheme);
     const newMode: ThemeMode = currentMode === 'light' ? 'dark' : 'light';
-
-    // Apply the new theme with forceApply=true to ensure it's applied
-    // regardless of current theme class state
     applyThemeToDOM(themeColorsRef.current, newMode, document.documentElement, true);
-
-    // Toggle the theme which will update the classes
     setTheme(newMode);
-
-    // Force a UI update after theme change
     setForceEditorUpdate(prev => prev + 1);
   }, [currentTheme, setTheme]);
 
@@ -184,48 +170,29 @@ export default function ThemeCreator() {
   // Handle imported theme
   const handleImportTheme = useCallback(
     (importedTheme: Record<ThemeMode, ThemeColors>) => {
-      // Merge imported theme with existing theme, keeping existing values that
-      // aren't present in the imported theme (e.g., sidebar theme, chart colors)
       const mergedTheme: Record<ThemeMode, ThemeColors> = {
         light: { ...themeColorsRef.current.light, ...importedTheme.light },
         dark: { ...themeColorsRef.current.dark, ...importedTheme.dark },
       };
 
-      // Update the theme colors reference with merged theme
       themeColorsRef.current = mergedTheme;
-
-      // Get the current active mode
       const activeMode = getActiveThemeMode(currentTheme);
-
-      // Extract hue from primary color for the hue selector
       const primaryColor = mergedTheme[activeMode].primary;
       const hue = extractHueFromColor(primaryColor);
-
-      console.log('Imported theme primary color:', primaryColor);
-      console.log('Extracted hue value:', hue);
-
-      // Update the current hue reference
       currentHueRef.current = hue;
 
-      // Apply the imported theme with the extracted hue
-      // This ensures all colors are properly synchronized with the hue value
       const updatedThemes = updateAllHues(mergedTheme, hue);
       themeColorsRef.current = updatedThemes;
 
-      // Apply the active theme to DOM
       applyThemeToDOM(updatedThemes, activeMode, document.documentElement, true);
 
-      // For the inactive theme, store as data attributes
       const inactiveMode: ThemeMode = activeMode === 'light' ? 'dark' : 'light';
       const inactiveTheme = updatedThemes[inactiveMode];
-
       Object.entries(inactiveTheme).forEach(([key, value]) => {
         const dataKey = toCamelCase(`${inactiveMode}-${key}`);
-
         if (key === 'radius') {
           document.documentElement.dataset[dataKey] = value;
         } else {
-          // Special handling for sidebar background
           if (key === 'sidebar-background') {
             const sidebarKey = toCamelCase(`${inactiveMode}-sidebar`);
             document.documentElement.dataset[sidebarKey] = `hsl(${value})`;
@@ -235,12 +202,10 @@ export default function ThemeCreator() {
         }
       });
 
-      // Force UI update with setTimeout to ensure it happens after state updates
       setTimeout(() => {
         setForceEditorUpdate(prev => prev + 1);
       }, 0);
 
-      // Show success message
       toast('Theme imported successfully');
     },
     [currentTheme]
@@ -249,36 +214,24 @@ export default function ThemeCreator() {
   // Handle font change
   const handleFontChange = useCallback((font: FontOption) => {
     setCurrentFont(font.family);
-    // Font will be applied by the FontSelector component through the FontProvider
   }, []);
 
   // Handle selecting a default theme
   const handleSelectDefaultTheme = useCallback(
     (themeName: string, theme: any) => {
-      // Merge with existing theme to preserve custom values
       const mergedTheme = {
         light: { ...themeColorsRef.current.light, ...theme.light },
         dark: { ...themeColorsRef.current.dark, ...theme.dark },
       };
 
-      // Update the theme colors reference
       themeColorsRef.current = mergedTheme;
-
-      // Get the current active mode
       const activeMode = getActiveThemeMode(currentTheme);
-
-      // Apply the active theme to DOM
       applyThemeToDOM(themeColorsRef.current, activeMode, document.documentElement, false);
 
-      // For the inactive theme, we'll use data attributes
       const inactiveMode: ThemeMode = activeMode === 'light' ? 'dark' : 'light';
-
-      // Store the inactive theme using data attributes
       const inactiveTheme = themeColorsRef.current[inactiveMode];
       Object.entries(inactiveTheme).forEach(([key, value]) => {
-        // Convert key to camelCase for dataset property
         const dataKey = toCamelCase(`${inactiveMode}-${key}`);
-
         if (key === 'radius') {
           document.documentElement.dataset[dataKey] = value;
         } else {
@@ -286,15 +239,11 @@ export default function ThemeCreator() {
         }
       });
 
-      // Extract hue from primary color
       const primaryColor = theme[activeMode].primary;
       const hue = extractHueFromColor(primaryColor);
       currentHueRef.current = hue;
 
-      // Force UI update
       setForceEditorUpdate(prev => prev + 1);
-
-      // Show toast notification
       toast(`${themeName.replace('Theme', '')} theme applied successfully`);
     },
     [currentTheme]
@@ -308,52 +257,87 @@ export default function ThemeCreator() {
 
   return (
     <div
-      className='flex flex-col min-h-screen'
-      // Use inline styles for theme preview to avoid re-renders
+      className="flex flex-col min-h-screen"
       style={getThemePreviewStyles(themeColorsRef.current, activeMode)}
     >
-      <header className='sticky top-0 z-[15] w-full bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/5 dark:shadow-secondary border-b'>
-        <div className='container h-14 flex items-center justify-between pl-4 sm:px-8'>
-          <div className='flex items-center space-x-4 lg:space-x-0'>
+      {/* ── Header ─────────────────────────────────────────── */}
+      <header className="sticky top-0 z-[15] w-full bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/5 dark:shadow-secondary border-b">
+        <div className="container h-14 flex items-center justify-between pl-4 sm:px-8">
+          <div className="flex items-center space-x-4 lg:space-x-0">
             <SidebarTrigger />
-            <h1 className='font-bold text-foreground pl-4'>Create a Theme</h1>
+            <h1 className="font-bold text-foreground pl-4">Theme Style Picker</h1>
           </div>
-          <div className='flex items-center gap-4'>
+          <div className="flex items-center gap-4">
             <ModeToggle onClick={() => handleThemeToggle()} />
-            <Button onClick={copyToClipboard} variant='outline' size='sm'>
-              {copied ? <Check className='w-4 h-4 mr-2' /> : <Copy className='w-4 h-4 mr-2' />}
+            <Button onClick={copyToClipboard} variant="outline" size="sm">
+              {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
               Copy Code
             </Button>
-            <Button onClick={() => setImportModalOpen(true)} size='sm'>
+            <Button onClick={() => setImportModalOpen(true)} size="sm">
               Import Theme
             </Button>
           </div>
         </div>
       </header>
 
-      <div className='flex flex-col md:flex-row flex-1 px-4 bg-card'>
-        {/* Theme Editor Component - avoid remounting with key changes */}
-        <ThemeEditor
-          key={`editor-${forceEditorUpdate}`}
-          themeColors={themeColorsRef.current}
-          activeMode={activeMode}
-          currentHue={currentHueRef.current}
-          editorMode={editorMode}
-          currentTheme={currentTheme}
-          currentFont={currentFont}
-          onColorChange={handleColorChange}
-          onHueChange={handleHueChange}
-          onRandomizeTheme={handleRandomizeTheme}
-          onEditorModeChange={handleEditorModeChange}
-          onThemeToggle={handleThemeToggle}
-          onFontChange={handleFontChange}
-          onSelectDefaultTheme={handleSelectDefaultTheme}
-        />
+      {/* ── 3-Panel Layout ─────────────────────────────────── */}
+      <div className="flex flex-1 overflow-hidden bg-card">
+        {/* ── Left Panel: Styles + Theme Editor ────────────── */}
+        <div className="w-[280px] border-r flex flex-col shrink-0">
+          <Tabs value={leftTab} onValueChange={setLeftTab} className="flex flex-col flex-1">
+            <div className="px-3 pt-3">
+              <TabsList className="w-full h-8">
+                <TabsTrigger value="styles" className="text-xs flex-1 h-7">
+                  Styles
+                </TabsTrigger>
+                <TabsTrigger value="tokens" className="text-xs flex-1 h-7">
+                  Tokens
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-        {/* Theme Preview Component */}
-        <ScrollArea className='w-full h-[calc(100vh-3.5rem-2rem)] bg-background'>
-          <ThemePreview />
-        </ScrollArea>
+            <TabsContent value="styles" className="flex-1 m-0">
+              <ScrollArea className="h-[calc(100vh-7.5rem)]">
+                <div className="p-3">
+                  <StyleSelector />
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="tokens" className="flex-1 m-0">
+              <ScrollArea className="h-[calc(100vh-7.5rem)]">
+                <ThemeEditor
+                  key={`editor-${forceEditorUpdate}`}
+                  themeColors={themeColorsRef.current}
+                  activeMode={activeMode}
+                  currentHue={currentHueRef.current}
+                  editorMode={editorMode}
+                  currentTheme={currentTheme}
+                  currentFont={currentFont}
+                  onColorChange={handleColorChange}
+                  onHueChange={handleHueChange}
+                  onRandomizeTheme={handleRandomizeTheme}
+                  onEditorModeChange={handleEditorModeChange}
+                  onThemeToggle={handleThemeToggle}
+                  onFontChange={handleFontChange}
+                  onSelectDefaultTheme={handleSelectDefaultTheme}
+                />
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* ── Center Panel: Live Preview ───────────────────── */}
+        <div className="flex-1 overflow-hidden bg-background">
+          <PreviewSwitcher />
+        </div>
+
+        {/* ── Right Panel: Style Controls ──────────────────── */}
+        <div className="w-[260px] border-l shrink-0">
+          <ScrollArea className="h-[calc(100vh-3.5rem)]">
+            <StyleControls />
+          </ScrollArea>
+        </div>
       </div>
 
       <ThemeImportModal
